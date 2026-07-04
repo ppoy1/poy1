@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Poy Enterprises - Admin Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="top">
+      <h1>Admin Dashboard</h1>
+      <form method="POST" action="/auth/logout"><button class="secondary" type="submit">Log out</button></form>
+    </header>
+
+    <div id="loading" class="muted">Loading bank data...</div>
+    <div id="content" style="display:none">
+      <div class="balance-grid">
+        <div class="card">
+          <h2>Total Deposits Held</h2>
+          <div class="balance-amount">$<span id="total-deposits">0</span></div>
+        </div>
+        <div class="card">
+          <h2>Total Loans Outstanding</h2>
+          <div class="balance-amount">$<span id="total-loans">0</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Clients</h2>
+        <table>
+          <thead><tr><th>IGN</th><th>Deposit</th><th>Savings</th></tr></thead>
+          <tbody id="clients-body"></tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h2>Loans</h2>
+        <table>
+          <thead><tr><th>Borrower</th><th>Principal</th><th>Weekly</th><th>Owed</th><th>Next payment</th></tr></thead>
+          <tbody id="loans-body"></tbody>
+        </table>
+      </div>
+
+      <p class="muted" id="synced-at"></p>
+    </div>
+  </div>
+
+  <script src="/admin.js"></script>
+</body>
+</html>

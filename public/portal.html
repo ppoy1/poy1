@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Poy Enterprises - My Account</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="top">
+      <h1 id="greeting">Poy Enterprises</h1>
+      <form method="POST" action="/auth/logout"><button class="secondary" type="submit">Log out</button></form>
+    </header>
+
+    <div id="loading" class="muted">Loading your account...</div>
+    <div id="content" style="display:none">
+      <div class="balance-grid">
+        <div class="card">
+          <h2>Deposit</h2>
+          <div class="balance-amount">$<span id="deposit-balance">0</span></div>
+          <form class="withdraw-form" id="withdraw-deposit-form">
+            <input type="number" step="0.01" min="0.01" placeholder="Amount" id="withdraw-deposit-amount" required />
+            <button type="submit">Withdraw (instant)</button>
+          </form>
+        </div>
+        <div class="card">
+          <h2>Savings</h2>
+          <div class="balance-amount">$<span id="savings-balance">0</span></div>
+          <form class="withdraw-form" id="withdraw-savings-form">
+            <input type="number" step="0.01" min="0.01" placeholder="Amount" id="withdraw-savings-amount" required />
+            <button type="submit">Request withdrawal</button>
+          </form>
+          <p class="muted">Savings withdrawals need the owner's approval - not instant.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Claim a deposit you already sent in-game</h2>
+        <p class="muted">Already ran <code>/db pay into PoyEnterprises &lt;amount&gt;</code>? Tell us where it should go.</p>
+        <form class="withdraw-form" id="claim-form">
+          <select id="claim-account-type">
+            <option value="Deposit">Deposit</option>
+            <option value="Savings">Savings</option>
+            <option value="Loan">Loan repayment</option>
+          </select>
+          <button type="submit">Claim it</button>
+        </form>
+      </div>
+
+      <div id="action-status"></div>
+
+      <div class="card" id="loans-card" style="display:none">
+        <h2>Loans</h2>
+        <table>
+          <thead>
+            <tr><th>Principal</th><th>Weekly</th><th>Owed</th><th>Next payment</th></tr>
+          </thead>
+          <tbody id="loans-body"></tbody>
+        </table>
+      </div>
+
+      <p class="muted" id="synced-at"></p>
+    </div>
+  </div>
+
+  <script src="/portal.js"></script>
+</body>
+</html>

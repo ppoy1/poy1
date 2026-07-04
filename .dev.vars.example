@@ -1,0 +1,7 @@
+# Copy this file to .dev.vars (gitignored) for local `wrangler pages dev` testing.
+# In production these are set via `npx wrangler pages secret put <NAME>` instead.
+
+DISCORD_CLIENT_SECRET=
+SESSION_SECRET=
+WEBSITE_SYNC_SECRET=
+ADMIN_PASSWORD=
