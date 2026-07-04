@@ -5,7 +5,7 @@ pages_build_output_dir = "public"
 # Filled in once you run: npx wrangler kv namespace create POYBANK_KV
 [[kv_namespaces]]
 binding = "POYBANK_KV"
-id = "REPLACE_WITH_KV_NAMESPACE_ID"
+  id = "17673b70a09f4c7f848f178b039e88cd"
 
 # Non-secret config - safe to commit. Secrets (DISCORD_CLIENT_SECRET,
 # SESSION_SECRET, WEBSITE_SYNC_SECRET, ADMIN_PASSWORD) are set separately via
