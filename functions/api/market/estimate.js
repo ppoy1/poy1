@@ -6,6 +6,7 @@
 import { verifySession } from "../../_lib/session.js";
 import { readMarketSnapshot } from "../../_lib/kv.js";
 import { estimateForCode } from "../../_lib/marketAlgorithm.js";
+import { fetchAurumEstimate } from "../../_lib/aurumPricer.js";
 
 export async function onRequestGet({ request, env }) {
   const session = await verifySession(env.SESSION_SECRET, request.headers.get("Cookie"));
@@ -22,10 +23,18 @@ export async function onRequestGet({ request, env }) {
   const x = url.searchParams.get("x");
   const z = url.searchParams.get("z");
 
+  // Aurum's own engine (real parcel data + comp-weighted pricing) is
+  // authoritative when reachable - only fall back to our local zone-median
+  // estimate if it's unavailable, unconfigured, or doesn't recognize the code.
+  const aurum = await fetchAurumEstimate(env.AURUM_PRICER_API_KEY, code);
+  if (aurum) {
+    return Response.json({ source: "aurum", ...aurum });
+  }
+
   const snapshot = await readMarketSnapshot(env.POYBANK_KV);
   if (!snapshot) {
     return Response.json({ error: "No market data synced yet - try again shortly" }, { status: 503 });
   }
 
-  return Response.json(estimateForCode(code, snapshot, { landArea, x, z }));
+  return Response.json({ source: "local", ...estimateForCode(code, snapshot, { landArea, x, z }) });
 }

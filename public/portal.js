@@ -290,6 +290,67 @@ async function loadMarketData() {
   renderMarket(await res.json());
 }
 
+function renderAurumEstimate(data) {
+  const est = data.estimate || {};
+  const mapLink = data.mapLink
+    ? `<p class="field-hint"><a href="${data.mapLink}" target="_blank" rel="noopener">View on map &rarr;</a></p>`
+    : "";
+  const details = [];
+  if (data.propertyType) details.push(data.propertyType);
+  if (data.areaGroup) details.push(data.areaGroup);
+  if (data.landArea) details.push(`${fmtWhole(data.landArea)} land area`);
+  if (data.distanceFromSpawn != null) details.push(`${fmtWhole(data.distanceFromSpawn)} blocks from spawn`);
+  const reasons = (est.reasons || []).map((r) => `<li>${r}</li>`).join("");
+  return `
+    <div class="stat-card good" style="margin-top:12px">
+      <h2>${data.propertyId || data.label}</h2>
+      <div class="balance-amount">$${fmtWhole(est.estimate)}</div>
+      <p class="field-hint">Aurum estimate &middot; confidence ${est.confidence ?? "?"}% &middot; range $${fmtWhole(est.estimateBandLow)}-$${fmtWhole(est.estimateBandHigh)}</p>
+      <p class="field-hint">${details.join(" &middot; ")}</p>
+      ${mapLink}
+      ${reasons ? `<ul style="margin:8px 0 0;padding-left:18px;font-size:0.8rem;color:var(--muted)">${reasons}</ul>` : ""}
+    </div>
+  `;
+}
+
+function renderLocalEstimate(data, x, z) {
+  if (!data.stats) {
+    return `<p class="muted">Couldn't place <strong>${data.code}</strong> in a known zone or district, and there's no general price data yet.</p>`;
+  }
+  const basisLabel = {
+    zone: `${data.zone} zone`,
+    district: `${data.district} district`,
+    overall: "all recent sales (no zone/district match)",
+  }[data.basis];
+
+  let extra = "";
+  if (data.land_area || data.distance_from_spawn != null) {
+    const parts = [];
+    if (data.land_area) parts.push(`${fmtWhole(data.land_area)} land area`);
+    if (data.distance_from_spawn != null) parts.push(`${fmtWhole(data.distance_from_spawn)} blocks from spawn`);
+    extra += `<p class="field-hint">${parts.join(" &middot; ")}</p>`;
+  }
+  if (x && z) {
+    extra += `<p class="field-hint"><a href="https://map.democracycraft.net/#reveille:${x}:64:${z}:200:0:0:0:1:flat" target="_blank" rel="noopener">View on map &rarr;</a></p>`;
+  }
+  if (data.reference_sales && data.reference_sales.length) {
+    extra += `<p class="field-hint" style="margin-top:8px">Known reference sales in this zone:</p><ul style="margin:4px 0 0;padding-left:18px;font-size:0.8rem;color:var(--muted)">`;
+    for (const r of data.reference_sales) {
+      extra += `<li>${r.code}: ${fmtWhole(r.land_area)} land, ${fmtWhole(r.distance_from_spawn)} blocks from spawn &rarr; sold $${fmtWhole(r.price)}</li>`;
+    }
+    extra += `</ul>`;
+  }
+
+  return `
+    <div class="stat-card good" style="margin-top:12px">
+      <h2>${data.code}</h2>
+      <div class="balance-amount">$${fmtWhole(data.stats.median)}</div>
+      <p class="field-hint">estimated from ${data.stats.count} comparable sale${data.stats.count === 1 ? "" : "s"} in ${basisLabel} &middot; range $${fmtWhole(data.stats.min)}-$${fmtWhole(data.stats.max)}</p>
+      ${extra}
+    </div>
+  `;
+}
+
 document.getElementById("plot-lookup-form").addEventListener("submit", async (e) => {
   e.preventDefault();
   const code = document.getElementById("plot-lookup-code").value.trim();
@@ -309,42 +370,7 @@ document.getElementById("plot-lookup-form").addEventListener("submit", async (e)
       resultEl.innerHTML = `<p class="muted">${data.error || "Something went wrong."}</p>`;
       return;
     }
-    if (!data.stats) {
-      resultEl.innerHTML = `<p class="muted">Couldn't place <strong>${data.code}</strong> in a known zone or district, and there's no general price data yet.</p>`;
-      return;
-    }
-    const basisLabel = {
-      zone: `${data.zone} zone`,
-      district: `${data.district} district`,
-      overall: "all recent sales (no zone/district match)",
-    }[data.basis];
-
-    let extra = "";
-    if (data.land_area || data.distance_from_spawn != null) {
-      const parts = [];
-      if (data.land_area) parts.push(`${fmtWhole(data.land_area)} land area`);
-      if (data.distance_from_spawn != null) parts.push(`${fmtWhole(data.distance_from_spawn)} blocks from spawn`);
-      extra += `<p class="field-hint">${parts.join(" &middot; ")}</p>`;
-    }
-    if (x && z) {
-      extra += `<p class="field-hint"><a href="https://map.democracycraft.net/#reveille:${x}:64:${z}:200:0:0:0:1:flat" target="_blank" rel="noopener">View on map &rarr;</a></p>`;
-    }
-    if (data.reference_sales && data.reference_sales.length) {
-      extra += `<p class="field-hint" style="margin-top:8px">Known reference sales in this zone:</p><ul style="margin:4px 0 0;padding-left:18px;font-size:0.8rem;color:var(--muted)">`;
-      for (const r of data.reference_sales) {
-        extra += `<li>${r.code}: ${fmtWhole(r.land_area)} land, ${fmtWhole(r.distance_from_spawn)} blocks from spawn &rarr; sold $${fmtWhole(r.price)}</li>`;
-      }
-      extra += `</ul>`;
-    }
-
-    resultEl.innerHTML = `
-      <div class="stat-card good" style="margin-top:12px">
-        <h2>${data.code}</h2>
-        <div class="balance-amount">$${fmtWhole(data.stats.median)}</div>
-        <p class="field-hint">estimated from ${data.stats.count} comparable sale${data.stats.count === 1 ? "" : "s"} in ${basisLabel} &middot; range $${fmtWhole(data.stats.min)}-$${fmtWhole(data.stats.max)}</p>
-        ${extra}
-      </div>
-    `;
+    resultEl.innerHTML = data.source === "aurum" ? renderAurumEstimate(data) : renderLocalEstimate(data, x, z);
   } catch {
     resultEl.innerHTML = "<p class=\"muted\">Couldn't reach the estimator. Try again shortly.</p>";
   }
