@@ -48,12 +48,25 @@ body {
     radial-gradient(1200px 700px at 15% -10%, rgba(76, 201, 255, 0.14), transparent 55%),
     radial-gradient(1000px 600px at 95% 0%, rgba(179, 76, 255, 0.16), transparent 55%),
     radial-gradient(900px 500px at 50% 110%, rgba(76, 255, 176, 0.08), transparent 60%);
-  background-size: 380px 220px, 380px 220px, 380px 220px, 380px 220px, 44px 44px, 44px 44px, 100% 100%, 100% 100%, 100% 100%;
+  background-size: 380px 220px, 380px 220px, 380px 220px, 380px 220px, 44px 44px, 44px 44px, 160% 160%, 160% 160%, 160% 160%;
   background-repeat: repeat, repeat, repeat, repeat, repeat, repeat, no-repeat, no-repeat, no-repeat;
   color: var(--text);
   font-family: "Inter", -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
+  animation: drift-glow 26s ease-in-out infinite;
+}
+
+@keyframes drift-glow {
+  0%, 100% { background-position: 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 15% -10%, 95% 0%, 50% 110%; }
+  50% { background-position: 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 25% 0%, 80% 15%, 45% 95%; }
+}
+
+#bg-particles, #bg-spotlight { z-index: -1; }
+.page, .app-shell { position: relative; z-index: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  body { animation: none; }
 }
 
 ::selection {
@@ -858,7 +871,16 @@ td.muted-cell {
   flex: 1;
   min-width: 0;
   padding: 34px 40px 60px;
+}
+
+/* Centering the max-width column via margin: auto on .main-content itself
+   is unreliable here (auto margins don't consistently absorb the space
+   freed up by max-width on a flex: 1 item across browsers). Centering its
+   direct-child blocks instead is plain block-level auto-margin centering -
+   no flexbox involved, so it's not subject to that edge case. */
+.main-content > div {
   max-width: 1100px;
+  margin: 0 auto;
 }
 
 .content-header {
