@@ -16,22 +16,42 @@ async function loadAdminData() {
   return res.json();
 }
 
+function clientRow(ign, client) {
+  const tr = document.createElement("tr");
+  tr.innerHTML = `
+    <td>${client.display_name || ign}</td>
+    <td>$${fmt(client.deposit_balance)}</td>
+    <td>$${fmt(client.savings_balance)}</td>
+  `;
+  return tr;
+}
+
 function render(data) {
+  document.getElementById("sidebar-username").textContent = data.admin_username || "Owner";
+  document.getElementById("sidebar-avatar").textContent = (data.admin_username || "?").charAt(0).toUpperCase();
+
   document.getElementById("total-deposits").textContent = fmt(data.summary?.total_deposits_held);
   document.getElementById("total-loans").textContent = fmt(data.summary?.total_loans_outstanding);
-  document.getElementById("client-count").textContent = Object.keys(data.clients || {}).length;
-  document.getElementById("synced-at").textContent = `Last synced: ${data.synced_at || "unknown"}`;
+  const clients = data.clients || {};
+  document.getElementById("client-count").textContent = Object.keys(clients).length;
+
+  document.querySelectorAll(".sync-pill").forEach((el) => {
+    el.textContent = `Synced ${data.synced_at || "unknown"}`;
+  });
 
   const clientsBody = document.getElementById("clients-body");
   clientsBody.innerHTML = "";
-  for (const [ign, client] of Object.entries(data.clients || {})) {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${client.display_name || ign}</td>
-      <td>$${fmt(client.deposit_balance)}</td>
-      <td>$${fmt(client.savings_balance)}</td>
-    `;
-    clientsBody.appendChild(tr);
+  for (const [ign, client] of Object.entries(clients)) {
+    clientsBody.appendChild(clientRow(ign, client));
+  }
+
+  const topBody = document.getElementById("top-clients-body");
+  topBody.innerHTML = "";
+  const topClients = Object.entries(clients)
+    .sort((a, b) => Number(b[1].deposit_balance || 0) - Number(a[1].deposit_balance || 0))
+    .slice(0, 5);
+  for (const [ign, client] of topClients) {
+    topBody.appendChild(clientRow(ign, client));
   }
 
   const loansBody = document.getElementById("loans-body");
@@ -58,6 +78,38 @@ function render(data) {
   document.getElementById("loading").style.display = "none";
   document.getElementById("content").style.display = "";
 }
+
+// ---------- Tab switching ----------
+
+function switchTab(tab) {
+  document.querySelectorAll(".nav-link").forEach((el) => el.classList.toggle("active", el.dataset.tab === tab));
+  document.querySelectorAll(".tab-panel").forEach((el) => el.classList.toggle("active", el.dataset.panel === tab));
+  closeSidebar();
+}
+
+document.querySelectorAll(".nav-link").forEach((el) => {
+  el.addEventListener("click", () => switchTab(el.dataset.tab));
+});
+
+// ---------- Mobile sidebar ----------
+
+const sidebar = document.getElementById("sidebar");
+const backdrop = document.getElementById("sidebar-backdrop");
+
+function openSidebar() {
+  sidebar.classList.add("open");
+  backdrop.classList.add("open");
+}
+
+function closeSidebar() {
+  sidebar.classList.remove("open");
+  backdrop.classList.remove("open");
+}
+
+document.getElementById("sidebar-toggle").addEventListener("click", () => {
+  sidebar.classList.contains("open") ? closeSidebar() : openSidebar();
+});
+backdrop.addEventListener("click", closeSidebar);
 
 loadAdminData().then((data) => {
   if (data) render(data);

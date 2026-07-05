@@ -14,5 +14,5 @@ export async function onRequestGet({ request, env }) {
     return Response.json({ error: "No data synced yet - try again shortly" }, { status: 503 });
   }
 
-  return Response.json(snapshot);
+  return Response.json({ ...snapshot, admin_username: session.username || "Owner" });
 }
