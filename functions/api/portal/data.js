@@ -6,7 +6,7 @@ import { readSnapshot } from "../../_lib/kv.js";
 
 export async function onRequestGet({ request, env }) {
   const session = await verifySession(env.SESSION_SECRET, request.headers.get("Cookie"));
-  if (!session || session.role !== "client") {
+  if (!session || (session.role !== "client" && session.role !== "admin") || !session.ign) {
     return Response.json({ error: "Not authenticated" }, { status: 401 });
   }
 
@@ -20,6 +20,7 @@ export async function onRequestGet({ request, env }) {
     display_name: session.ign,
     deposit_balance: "0",
     savings_balance: "0",
+    history: [],
   };
   const loans = (snapshot.loans || []).filter(
     (l) => (l.minecraft_ign || "").toLowerCase() === ignLower
@@ -30,5 +31,6 @@ export async function onRequestGet({ request, env }) {
     account,
     loans,
     synced_at: snapshot.synced_at,
+    is_admin: session.role === "admin",
   });
 }
