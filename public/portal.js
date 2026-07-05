@@ -5,7 +5,7 @@ async function loadPortalData() {
     return null;
   }
   if (!res.ok) {
-    document.getElementById("loading").textContent = "Couldn't load your account. Try again shortly.";
+    document.getElementById("loading").innerHTML = '<p class="muted">Couldn\'t load your account. Try again shortly.</p>';
     return null;
   }
   return res.json();
@@ -26,12 +26,19 @@ function render(data) {
     const body = document.getElementById("loans-body");
     body.innerHTML = "";
     for (const loan of data.loans) {
+      const total = Number(loan.total_obligation || loan.amount || 0);
+      const repaid = Number(loan.repaid || 0);
+      const pct = total > 0 ? Math.min(100, Math.round((repaid / total) * 100)) : 0;
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>$${fmt(loan.amount)}</td>
         <td>$${fmt(loan.weekly_payment)}</td>
+        <td>
+          <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
+          <span class="muted" style="font-size:0.75rem">${pct}% paid</span>
+        </td>
         <td>$${fmt(loan.owed)}</td>
-        <td>${loan.next_installment || ""} - ${loan.next_due_date || ""}</td>
+        <td><span class="badge">${loan.next_installment || ""} &middot; ${loan.next_due_date || ""}</span></td>
       `;
       body.appendChild(tr);
     }
