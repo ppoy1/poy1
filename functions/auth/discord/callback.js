@@ -36,10 +36,13 @@ export async function onRequestGet({ request, env }) {
   }
   const discordUser = await userResp.json();
 
+  const snapshot = await readSnapshot(env.POYBANK_KV);
+  const ign = snapshot?.account_links?.[discordUser.id];
+
   if (env.OWNER_DISCORD_ID && discordUser.id === env.OWNER_DISCORD_ID) {
     const cookie = await createSessionCookie(
       env.SESSION_SECRET,
-      { role: "admin", discord_id: discordUser.id },
+      { role: "admin", discord_id: discordUser.id, username: discordUser.username, ign: ign || null },
       60 * 60 * 24 * 7 // 7 days
     );
     return new Response(null, {
@@ -48,8 +51,6 @@ export async function onRequestGet({ request, env }) {
     });
   }
 
-  const snapshot = await readSnapshot(env.POYBANK_KV);
-  const ign = snapshot?.account_links?.[discordUser.id];
   if (!ign) {
     const dest = new URL("/not-linked.html", request.url);
     dest.searchParams.set("discord_id", discordUser.id);
