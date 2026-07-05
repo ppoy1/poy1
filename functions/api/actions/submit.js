@@ -7,7 +7,7 @@ import { validateActionSubmission, enqueueAction } from "../../_lib/actions.js";
 
 export async function onRequestPost({ request, env }) {
   const session = await verifySession(env.SESSION_SECRET, request.headers.get("Cookie"));
-  if (!session || session.role !== "client") {
+  if (!session || (session.role !== "client" && session.role !== "admin") || !session.ign) {
     return Response.json({ error: "Not authenticated" }, { status: 401 });
   }
 

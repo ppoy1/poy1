@@ -54,6 +54,8 @@ function render(data) {
     topBody.appendChild(clientRow(ign, client));
   }
 
+  renderWithdrawals(data.pending_withdrawals || []);
+
   const loansBody = document.getElementById("loans-body");
   loansBody.innerHTML = "";
   for (const loan of data.loans || []) {
@@ -78,6 +80,66 @@ function render(data) {
   document.getElementById("loading").style.display = "none";
   document.getElementById("content").style.display = "";
 }
+
+// ---------- Withdrawals ----------
+
+function renderWithdrawals(pending) {
+  const body = document.getElementById("withdrawals-body");
+  const empty = document.getElementById("withdrawals-empty");
+  const badge = document.getElementById("withdrawals-badge");
+
+  body.innerHTML = "";
+  if (!pending.length) {
+    empty.style.display = "";
+    badge.style.display = "none";
+  } else {
+    empty.style.display = "none";
+    badge.style.display = "";
+    badge.textContent = pending.length;
+    for (const req of pending) {
+      const tr = document.createElement("tr");
+      tr.dataset.requestId = req.id;
+      tr.innerHTML = `
+        <td>${req.ign}</td>
+        <td>$${fmt(req.amount)}</td>
+        <td style="text-align:right">
+          <button class="secondary" data-action="accept_savings_withdrawal" data-id="${req.id}">Approve</button>
+          <button class="secondary" data-action="deny_savings_withdrawal" data-id="${req.id}">Deny</button>
+        </td>
+      `;
+      body.appendChild(tr);
+    }
+  }
+}
+
+document.getElementById("withdrawals-body").addEventListener("click", async (e) => {
+  const btn = e.target.closest("button[data-action]");
+  if (!btn) return;
+  const type = btn.dataset.action;
+  const requestId = Number(btn.dataset.id);
+  const row = btn.closest("tr");
+  row.querySelectorAll("button").forEach((b) => (b.disabled = true));
+  btn.textContent = "...";
+
+  try {
+    const res = await fetch("/api/admin/actions/submit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type, request_id: requestId }),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      alert(body.error || "Something went wrong.");
+      row.querySelectorAll("button").forEach((b) => (b.disabled = false));
+      btn.textContent = type === "accept_savings_withdrawal" ? "Approve" : "Deny";
+      return;
+    }
+    row.innerHTML = `<td colspan="3" class="muted-cell">Submitted - the bot processes this within about a minute.</td>`;
+  } catch {
+    alert("Couldn't reach the server. Try again shortly.");
+    row.querySelectorAll("button").forEach((b) => (b.disabled = false));
+  }
+});
 
 // ---------- Tab switching ----------
 

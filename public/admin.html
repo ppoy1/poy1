@@ -41,6 +41,11 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
             Loans
           </button>
+          <button class="nav-link" data-tab="withdrawals">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Withdrawals
+            <span class="nav-badge" id="withdrawals-badge" style="display:none">0</span>
+          </button>
         </div>
 
         <div class="nav-category">
@@ -152,6 +157,27 @@
                 <tbody id="loans-body"></tbody>
               </table>
             </div>
+          </div>
+        </section>
+
+        <!-- Withdrawals -->
+        <section class="tab-panel" data-panel="withdrawals">
+          <div class="content-header">
+            <div>
+              <h1>Pending Withdrawals</h1>
+              <p class="muted">Savings withdrawal requests awaiting your approval.</p>
+            </div>
+            <span class="sync-pill" id="synced-at-4"></span>
+          </div>
+
+          <div class="card">
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>IGN</th><th>Amount</th><th></th></tr></thead>
+                <tbody id="withdrawals-body"></tbody>
+              </table>
+            </div>
+            <p class="field-hint" id="withdrawals-empty" style="display:none">No pending withdrawal requests.</p>
           </div>
         </section>
 

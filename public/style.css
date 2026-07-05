@@ -323,6 +323,30 @@ button:disabled {
   box-shadow: inset 0 0 0 1px rgba(62, 232, 168, 0.25);
 }
 
+.manage-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 16px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--accent);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.manage-link .arrow {
+  transition: transform 0.2s ease;
+}
+
+.manage-link:hover {
+  color: var(--accent-2);
+}
+
+.manage-link:hover .arrow {
+  transform: translateX(4px);
+}
+
 .stat-card h2 {
   margin-bottom: 8px;
 }
@@ -781,6 +805,17 @@ td.muted-cell {
 .nav-link:hover {
   background: var(--panel-2);
   color: var(--text);
+}
+
+.nav-badge {
+  margin-left: auto;
+  background: var(--bad);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 999px;
+  line-height: 1.5;
 }
 
 .nav-link.active {

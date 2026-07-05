@@ -16,6 +16,7 @@ export function getSnapshotShapeErrors(body) {
     errors.push("clients must be an object");
   }
   if (!Array.isArray(body.loans)) errors.push("loans must be an array");
+  if (!Array.isArray(body.pending_withdrawals)) errors.push("pending_withdrawals must be an array");
   if (typeof body.summary !== "object" || body.summary === null) {
     errors.push("summary must be an object");
   }
