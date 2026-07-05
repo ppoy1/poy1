@@ -22,8 +22,8 @@ export async function onRequestGet({ request, env }) {
       redirect_uri: env.DISCORD_REDIRECT_URI,
     }),
   });
-  if (!tokenResp.ok) {
-    return new Response("Discord token exchange failed", { status: 502 });
+      const detail = await tokenResp.text();
+      return new Response(`Discord token exchange failed: ${detail}`, { status: 502 });
   }
   const { access_token } = await tokenResp.json();
 
