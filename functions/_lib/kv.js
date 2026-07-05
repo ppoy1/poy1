@@ -42,6 +42,9 @@ export function getMarketSnapshotShapeErrors(body) {
   if (typeof body.location_stats !== "object" || body.location_stats === null) {
     errors.push("location_stats must be an object");
   }
+  if (typeof body.overall_stats !== "object" || body.overall_stats === null) {
+    errors.push("overall_stats must be an object");
+  }
   return errors;
 }
 

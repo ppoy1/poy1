@@ -3,6 +3,11 @@ function fmt(amount) {
   return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+function fmtWhole(amount) {
+  const n = Number(amount || 0);
+  return n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+
 function fmtDate(dateStr) {
   if (!dateStr) return "";
   const d = new Date(dateStr + "T00:00:00");
@@ -223,3 +228,99 @@ backdrop.addEventListener("click", closeSidebar);
 loadPortalData().then((data) => {
   if (data) render(data);
 });
+
+// ---------- Market ----------
+
+function marketStatCard(label, stats) {
+  const div = document.createElement("div");
+  div.className = "stat-card good";
+  div.innerHTML = `
+    <h2>${label}</h2>
+    <div class="balance-amount">$${fmtWhole(stats.median)}</div>
+    <p class="field-hint">median of ${stats.count} sale${stats.count === 1 ? "" : "s"} &middot; range $${fmtWhole(stats.min)}-$${fmtWhole(stats.max)}</p>
+  `;
+  return div;
+}
+
+function renderMarket(data) {
+  document.getElementById("market-synced-at").textContent = `Synced ${data.generated_at || "unknown"}`;
+
+  const zoneGrid = document.getElementById("market-zone-grid");
+  const zoneEntries = Object.entries(data.zone_stats || {});
+  zoneGrid.innerHTML = "";
+  if (!zoneEntries.length) {
+    document.getElementById("market-zone-card").style.display = "none";
+  } else {
+    document.getElementById("market-zone-card").style.display = "";
+    for (const [zone, stats] of zoneEntries) zoneGrid.appendChild(marketStatCard(zone, stats));
+  }
+
+  const body = document.getElementById("market-sales-body");
+  const empty = document.getElementById("market-sales-empty");
+  const sales = data.sales || [];
+  body.innerHTML = "";
+  if (!sales.length) {
+    empty.style.display = "";
+  } else {
+    empty.style.display = "none";
+    for (const s of sales.slice(0, 20)) {
+      const multiplier = s.starting_bid ? `${(s.final_price / s.starting_bid).toFixed(1)}x` : "-";
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${s.plot_code || s.name || ""}</td>
+        <td>${s.zone || ""}</td>
+        <td>${s.location || ""}</td>
+        <td>${s.starting_bid ? "$" + fmtWhole(s.starting_bid) : "-"}</td>
+        <td>$${fmtWhole(s.final_price)}</td>
+        <td><span class="badge badge-good">${multiplier}</span></td>
+      `;
+      body.appendChild(tr);
+    }
+  }
+}
+
+async function loadMarketData() {
+  const res = await fetch("/api/market/data");
+  if (!res.ok) {
+    document.getElementById("market-zone-card").style.display = "none";
+    document.getElementById("market-sales-empty").textContent = "No market data yet - check back after the bot's next sync.";
+    document.getElementById("market-sales-empty").style.display = "";
+    return;
+  }
+  renderMarket(await res.json());
+}
+
+document.getElementById("plot-lookup-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const code = document.getElementById("plot-lookup-code").value.trim();
+  const resultEl = document.getElementById("plot-lookup-result");
+  resultEl.innerHTML = '<p class="muted">Looking up...</p>';
+  try {
+    const res = await fetch(`/api/market/estimate?code=${encodeURIComponent(code)}`);
+    const data = await res.json();
+    if (!res.ok) {
+      resultEl.innerHTML = `<p class="muted">${data.error || "Something went wrong."}</p>`;
+      return;
+    }
+    if (!data.stats) {
+      resultEl.innerHTML = `<p class="muted">Couldn't place <strong>${data.code}</strong> in a known zone or district, and there's no general price data yet.</p>`;
+      return;
+    }
+    const basisLabel = {
+      zone: `${data.zone} zone`,
+      district: `${data.district} district`,
+      overall: "all recent sales (no zone/district match)",
+    }[data.basis];
+    resultEl.innerHTML = `
+      <div class="stat-card good" style="margin-top:12px">
+        <h2>${data.code}</h2>
+        <div class="balance-amount">$${fmtWhole(data.stats.median)}</div>
+        <p class="field-hint">estimated from ${data.stats.count} comparable sale${data.stats.count === 1 ? "" : "s"} in ${basisLabel} &middot; range $${fmtWhole(data.stats.min)}-$${fmtWhole(data.stats.max)}</p>
+      </div>
+    `;
+  } catch {
+    resultEl.innerHTML = "<p class=\"muted\">Couldn't reach the estimator. Try again shortly.</p>";
+  }
+});
+
+loadMarketData();
