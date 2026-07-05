@@ -26,29 +26,3 @@ export async function readSnapshot(kv) {
   const raw = await kv.get("snapshot");
   return raw ? JSON.parse(raw) : null;
 }
-
-// Same defense-in-depth idea as getSnapshotShapeErrors, for the real estate
-// market index pushed to /api/market/sync.
-export function getMarketSnapshotShapeErrors(body) {
-  const errors = [];
-  if (!body || typeof body !== "object") {
-    return ["body must be a JSON object"];
-  }
-  if (typeof body.generated_at !== "string") errors.push("generated_at must be a string");
-  if (!Array.isArray(body.sales)) errors.push("sales must be an array");
-  if (typeof body.zone_stats !== "object" || body.zone_stats === null) {
-    errors.push("zone_stats must be an object");
-  }
-  if (typeof body.location_stats !== "object" || body.location_stats === null) {
-    errors.push("location_stats must be an object");
-  }
-  if (typeof body.overall_stats !== "object" || body.overall_stats === null) {
-    errors.push("overall_stats must be an object");
-  }
-  return errors;
-}
-
-export async function readMarketSnapshot(kv) {
-  const raw = await kv.get("market_snapshot");
-  return raw ? JSON.parse(raw) : null;
-}

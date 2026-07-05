@@ -47,14 +47,6 @@
           </button>
         </div>
 
-        <div class="nav-category">
-          <div class="nav-category-label">Market</div>
-          <button class="nav-link" data-tab="market">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
-            Property Prices
-          </button>
-        </div>
-
         <div class="nav-category" id="admin-nav-category" style="display:none">
           <div class="nav-category-label">Owner</div>
           <a class="nav-link" href="/admin.html">
@@ -239,48 +231,6 @@
               <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
               No transactions logged yet.
             </div>
-          </div>
-        </section>
-
-        <!-- Market -->
-        <section class="tab-panel" data-panel="market">
-          <div class="content-header">
-            <div>
-              <h1>Property Prices</h1>
-              <p class="muted">Built from real closed #realestate auctions - not asking prices.</p>
-            </div>
-            <span class="sync-pill" id="market-synced-at"></span>
-          </div>
-
-          <div class="card">
-            <h2>Look Up a Plot</h2>
-            <p class="muted" style="margin:0 0 4px">Enter any plot code (e.g. C258, R145, AV-C022) to estimate its value from comparable sales. Land area and coordinates are optional - add them if you know them for a more specific comparison.</p>
-            <form class="withdraw-form" id="plot-lookup-form">
-              <input type="text" id="plot-lookup-code" placeholder="Plot code" required />
-              <input type="number" id="plot-lookup-land" placeholder="Land area (optional)" />
-              <input type="number" id="plot-lookup-x" placeholder="X (optional)" />
-              <input type="number" id="plot-lookup-z" placeholder="Z (optional)" />
-              <button type="submit">Estimate</button>
-            </form>
-            <div id="plot-lookup-result"></div>
-          </div>
-
-          <div class="card" id="market-zone-card">
-            <h2>Price by Zone</h2>
-            <div class="balance-grid" id="market-zone-grid"></div>
-          </div>
-
-          <div class="card">
-            <h2>Recent Closed Auctions</h2>
-            <div class="table-wrap">
-              <table>
-                <thead>
-                  <tr><th>Plot</th><th>Zone</th><th>District</th><th>Starting Bid</th><th>Final Price</th><th>vs. Starting</th></tr>
-                </thead>
-                <tbody id="market-sales-body"></tbody>
-              </table>
-            </div>
-            <p class="field-hint" id="market-sales-empty" style="display:none">No closed auctions indexed yet - check back after the next sync.</p>
           </div>
         </section>
 
