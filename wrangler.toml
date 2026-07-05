@@ -5,11 +5,14 @@ pages_build_output_dir = "public"
 # Filled in once you run: npx wrangler kv namespace create POYBANK_KV
 [[kv_namespaces]]
 binding = "POYBANK_KV"
-  id = "17673b70a09f4c7f848f178b039e88cd"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
 
 # Non-secret config - safe to commit. Secrets (DISCORD_CLIENT_SECRET,
-# SESSION_SECRET, WEBSITE_SYNC_SECRET, ADMIN_PASSWORD) are set separately via
+# SESSION_SECRET, WEBSITE_SYNC_SECRET) are set separately via
 # `npx wrangler pages secret put <NAME>` and never appear in this file.
 [vars]
-DISCORD_CLIENT_ID = "1514240501073842278"
-DISCORD_REDIRECT_URI = "https://poy1.pages.dev/auth/discord/callback"
+DISCORD_CLIENT_ID = "REPLACE_WITH_DISCORD_CLIENT_ID"
+DISCORD_REDIRECT_URI = "https://REPLACE-WITH-YOUR-PROJECT.pages.dev/auth/discord/callback"
+# Your own Discord user ID (enable Developer Mode in Discord, then right-click
+# your profile -> Copy User ID). Only this account gets the admin dashboard.
+OWNER_DISCORD_ID = "REPLACE_WITH_YOUR_DISCORD_USER_ID"
