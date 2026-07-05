@@ -18,11 +18,14 @@ export async function onRequestGet({ request, env }) {
   if (!code) {
     return Response.json({ error: "Missing ?code=" }, { status: 400 });
   }
+  const landArea = url.searchParams.get("land");
+  const x = url.searchParams.get("x");
+  const z = url.searchParams.get("z");
 
   const snapshot = await readMarketSnapshot(env.POYBANK_KV);
   if (!snapshot) {
     return Response.json({ error: "No market data synced yet - try again shortly" }, { status: 503 });
   }
 
-  return Response.json(estimateForCode(code, snapshot));
+  return Response.json(estimateForCode(code, snapshot, { landArea, x, z }));
 }

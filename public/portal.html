@@ -254,9 +254,12 @@
 
           <div class="card">
             <h2>Look Up a Plot</h2>
-            <p class="muted" style="margin:0 0 4px">Enter any plot code (e.g. C258, R145, AV-C022) to estimate its value from comparable sales.</p>
+            <p class="muted" style="margin:0 0 4px">Enter any plot code (e.g. C258, R145, AV-C022) to estimate its value from comparable sales. Land area and coordinates are optional - add them if you know them for a more specific comparison.</p>
             <form class="withdraw-form" id="plot-lookup-form">
               <input type="text" id="plot-lookup-code" placeholder="Plot code" required />
+              <input type="number" id="plot-lookup-land" placeholder="Land area (optional)" />
+              <input type="number" id="plot-lookup-x" placeholder="X (optional)" />
+              <input type="number" id="plot-lookup-z" placeholder="Z (optional)" />
               <button type="submit">Estimate</button>
             </form>
             <div id="plot-lookup-result"></div>

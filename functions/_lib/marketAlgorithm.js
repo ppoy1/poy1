@@ -12,6 +12,26 @@ const DISTRICT_PREFIXES = { AV: "Aventura", WL: "Willow", OR: "Oakridge" };
 const SUB_ZONE_LETTERS = { C: "Commercial", R: "Residential", S: "Skyscraper" };
 const ZONE_PREFIXES = { R: "Residential", C: "Commercial", S: "Skyscraper", I: "Industrial" };
 
+// DemocracyCraft's actual main-spawn coordinates on the Reveille map -
+// confirms distance is a real, computable signal whenever a plot's x/z is
+// known, without needing a parcel database.
+const SPAWN = { x: 2734, z: 4152 };
+
+export function distanceFromSpawn(x, z) {
+  return Math.round(Math.hypot(Number(x) - SPAWN.x, Number(z) - SPAWN.z));
+}
+
+// Hand-entered reference sales (not from the bot's automated #realestate
+// sync - these are anecdotal examples passed along manually). Shown as
+// context only, never blended into the statistical estimate below: two
+// data points isn't enough to safely fit a distance/land-size curve, and a
+// fabricated formula from that little evidence would be less honest than
+// just showing the raw comps.
+const MANUAL_REFERENCE_SALES = [
+  { code: "C256", zone: "Commercial", land_area: 2100, distance_from_spawn: 200, price: 100000 },
+  { code: "C233", zone: "Commercial", land_area: 3000, distance_from_spawn: 300, price: 95000 },
+];
+
 export function inferZoneFromCode(rawCode) {
   const code = (rawCode || "").trim().toUpperCase();
 
@@ -30,7 +50,7 @@ export function inferZoneFromCode(rawCode) {
   return { zone: null, district: null };
 }
 
-export function estimateForCode(rawCode, snapshot) {
+export function estimateForCode(rawCode, snapshot, options = {}) {
   const { zone, district } = inferZoneFromCode(rawCode);
   const zoneStats = zone ? snapshot.zone_stats?.[zone] : null;
   const districtStats = district ? snapshot.location_stats?.[district] : null;
@@ -45,6 +65,14 @@ export function estimateForCode(rawCode, snapshot) {
     return false;
   }).slice(0, 8);
 
+  const landArea = options.landArea ? Number(options.landArea) : null;
+  const hasCoords = options.x != null && options.z != null && options.x !== "" && options.z !== "";
+  const distance = hasCoords ? distanceFromSpawn(options.x, options.z) : null;
+
+  const referenceSales = zone
+    ? MANUAL_REFERENCE_SALES.filter((r) => r.zone === zone)
+    : [];
+
   return {
     code: (rawCode || "").trim().toUpperCase(),
     zone,
@@ -52,5 +80,8 @@ export function estimateForCode(rawCode, snapshot) {
     basis,
     stats,
     comparable_sales: stats ? comparableSales : [],
+    land_area: landArea,
+    distance_from_spawn: distance,
+    reference_sales: referenceSales,
   };
 }

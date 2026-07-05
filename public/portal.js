@@ -293,10 +293,17 @@ async function loadMarketData() {
 document.getElementById("plot-lookup-form").addEventListener("submit", async (e) => {
   e.preventDefault();
   const code = document.getElementById("plot-lookup-code").value.trim();
+  const land = document.getElementById("plot-lookup-land").value.trim();
+  const x = document.getElementById("plot-lookup-x").value.trim();
+  const z = document.getElementById("plot-lookup-z").value.trim();
   const resultEl = document.getElementById("plot-lookup-result");
   resultEl.innerHTML = '<p class="muted">Looking up...</p>';
   try {
-    const res = await fetch(`/api/market/estimate?code=${encodeURIComponent(code)}`);
+    const params = new URLSearchParams({ code });
+    if (land) params.set("land", land);
+    if (x) params.set("x", x);
+    if (z) params.set("z", z);
+    const res = await fetch(`/api/market/estimate?${params}`);
     const data = await res.json();
     if (!res.ok) {
       resultEl.innerHTML = `<p class="muted">${data.error || "Something went wrong."}</p>`;
@@ -311,11 +318,31 @@ document.getElementById("plot-lookup-form").addEventListener("submit", async (e)
       district: `${data.district} district`,
       overall: "all recent sales (no zone/district match)",
     }[data.basis];
+
+    let extra = "";
+    if (data.land_area || data.distance_from_spawn != null) {
+      const parts = [];
+      if (data.land_area) parts.push(`${fmtWhole(data.land_area)} land area`);
+      if (data.distance_from_spawn != null) parts.push(`${fmtWhole(data.distance_from_spawn)} blocks from spawn`);
+      extra += `<p class="field-hint">${parts.join(" &middot; ")}</p>`;
+    }
+    if (x && z) {
+      extra += `<p class="field-hint"><a href="https://map.democracycraft.net/#reveille:${x}:64:${z}:200:0:0:0:1:flat" target="_blank" rel="noopener">View on map &rarr;</a></p>`;
+    }
+    if (data.reference_sales && data.reference_sales.length) {
+      extra += `<p class="field-hint" style="margin-top:8px">Known reference sales in this zone:</p><ul style="margin:4px 0 0;padding-left:18px;font-size:0.8rem;color:var(--muted)">`;
+      for (const r of data.reference_sales) {
+        extra += `<li>${r.code}: ${fmtWhole(r.land_area)} land, ${fmtWhole(r.distance_from_spawn)} blocks from spawn &rarr; sold $${fmtWhole(r.price)}</li>`;
+      }
+      extra += `</ul>`;
+    }
+
     resultEl.innerHTML = `
       <div class="stat-card good" style="margin-top:12px">
         <h2>${data.code}</h2>
         <div class="balance-amount">$${fmtWhole(data.stats.median)}</div>
         <p class="field-hint">estimated from ${data.stats.count} comparable sale${data.stats.count === 1 ? "" : "s"} in ${basisLabel} &middot; range $${fmtWhole(data.stats.min)}-$${fmtWhole(data.stats.max)}</p>
+        ${extra}
       </div>
     `;
   } catch {
