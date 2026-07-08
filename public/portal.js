@@ -164,10 +164,9 @@ async function submitAction(payload) {
     showStatus(body.error || "Something went wrong.", false);
     return;
   }
-  showStatus(
-    "Request submitted - it's processed by the bot within about a minute. Refresh in a bit to see the updated balance.",
-    true
-  );
+  showStatus("Done - your balance below is updated. Fully settles with the bot within about a minute.", true);
+  const data = await loadPortalData();
+  if (data) render(data);
 }
 
 document.getElementById("withdraw-deposit-form").addEventListener("submit", async (e) => {

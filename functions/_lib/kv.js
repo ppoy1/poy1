@@ -27,3 +27,27 @@ export async function readSnapshot(kv) {
   const raw = await kv.get("snapshot");
   return raw ? JSON.parse(raw) : null;
 }
+
+// Applies an immediate, optimistic adjustment to the cached snapshot's
+// balance for one client, so the portal reflects a submitted action right
+// away instead of waiting for the bot's next sync (~60s after it actually
+// processes the action). This is a display convenience only - the bot's
+// own local files remain the sole source of truth, and its next snapshot
+// push overwrites this with the real, authoritative number regardless.
+// Only ever called for action types where the effect on the balance is
+// fully known at submission time (no owner approval gate, no external fact
+// like an in-game payment still needing to be matched).
+export async function applyOptimisticBalanceDelta(kv, ign, { depositDelta = 0, savingsDelta = 0 }) {
+  const snapshot = await readSnapshot(kv);
+  const ignLower = (ign || "").toLowerCase();
+  const client = snapshot?.clients?.[ignLower];
+  if (!client) return null;
+
+  const newDeposit = (parseFloat(client.deposit_balance) || 0) + depositDelta;
+  const newSavings = (parseFloat(client.savings_balance) || 0) + savingsDelta;
+  client.deposit_balance = newDeposit.toFixed(2);
+  client.savings_balance = newSavings.toFixed(2);
+
+  await kv.put("snapshot", JSON.stringify(snapshot));
+  return { deposit_balance: client.deposit_balance, savings_balance: client.savings_balance };
+}
