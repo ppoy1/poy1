@@ -3,6 +3,13 @@ function fmt(amount) {
   return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+function fmtDate(dateStr) {
+  if (!dateStr) return "";
+  const d = new Date(dateStr + "T00:00:00");
+  if (Number.isNaN(d.getTime())) return dateStr;
+  return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+}
+
 async function loadAdminData() {
   const res = await fetch("/api/admin/data");
   if (res.status === 401) {
@@ -65,6 +72,7 @@ function render(data) {
   }
 
   renderWithdrawals(data.pending_withdrawals || []);
+  renderTransactions(data.recent_transactions || []);
 
   const loansBody = document.getElementById("loans-body");
   loansBody.innerHTML = "";
@@ -153,6 +161,38 @@ document.getElementById("withdrawals-body").addEventListener("click", async (e) 
     row.querySelectorAll("button").forEach((b) => (b.disabled = false));
   }
 });
+
+// ---------- Transactions ----------
+
+function renderTransactions(transactions) {
+  const body = document.getElementById("transactions-body");
+  const empty = document.getElementById("transactions-empty");
+  const table = body.closest("table");
+
+  body.innerHTML = "";
+  if (!transactions.length) {
+    empty.style.display = "";
+    table.style.display = "none";
+    return;
+  }
+  empty.style.display = "none";
+  table.style.display = "";
+  for (const txn of transactions) {
+    const amount = Number(txn.amount || 0);
+    const isIn = amount > 0;
+    const icon = isIn
+      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>'
+      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>';
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td class="muted-cell">${fmtDate(txn.date)}</td>
+      <td>${txn.counterparty || ""}</td>
+      <td><span class="txn-type ${isIn ? "deposit" : "withdrawal"}">${icon}${isIn ? "In" : "Out"}</span></td>
+      <td>${isIn ? "+" : "-"}$${fmt(Math.abs(amount))}</td>
+    `;
+    body.appendChild(tr);
+  }
+}
 
 // ---------- Tab switching ----------
 
