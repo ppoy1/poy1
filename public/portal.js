@@ -140,10 +140,17 @@ function render(data) {
   document.getElementById("content").style.display = "";
 }
 
+let statusHideTimer = null;
+
 function showStatus(message, ok) {
   const el = document.getElementById("action-status");
   el.textContent = message;
   el.className = `status-msg ${ok ? "ok" : "err"}`;
+  clearTimeout(statusHideTimer);
+  statusHideTimer = setTimeout(() => {
+    el.className = "";
+    el.textContent = "";
+  }, 6000);
 }
 
 async function submitAction(payload) {
