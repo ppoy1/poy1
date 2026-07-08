@@ -5,8 +5,15 @@
 // processes requests locally using its own secrets/API access.
 
 const KV_KEY = "pending_actions";
-const VALID_TYPES = ["withdraw_deposit", "withdraw_savings", "claim_deposit"];
+const VALID_TYPES = [
+  "withdraw_deposit",
+  "withdraw_savings",
+  "claim_deposit",
+  "transfer_deposit_to_savings",
+  "transfer_deposit_to_loan",
+];
 const VALID_CLAIM_ACCOUNT_TYPES = ["Deposit", "Savings", "Loan"];
+const AMOUNT_REQUIRED_TYPES = ["withdraw_deposit", "withdraw_savings", "transfer_deposit_to_savings", "transfer_deposit_to_loan"];
 
 export async function readPendingActions(kv) {
   const raw = await kv.get(KV_KEY);
@@ -22,7 +29,7 @@ export function validateActionSubmission(body) {
   if (!VALID_TYPES.includes(body.type)) {
     return `type must be one of: ${VALID_TYPES.join(", ")}`;
   }
-  if (body.type === "withdraw_deposit" || body.type === "withdraw_savings") {
+  if (AMOUNT_REQUIRED_TYPES.includes(body.type)) {
     const amount = Number(body.amount);
     if (!Number.isFinite(amount) || amount <= 0) {
       return "amount must be a positive number";
