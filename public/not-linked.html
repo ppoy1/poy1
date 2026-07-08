@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Poy Enterprises - Account Not Linked</title>
+  <title>Poy Enterprises - Open an Account</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -11,19 +11,55 @@
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
-  <div class="page">
-    <div class="landing-hero">
-      <div class="brand-mark" style="background: linear-gradient(135deg, #f56b7c, #8a5cf6);">!</div>
-      <h1 style="font-size: 2rem;">Discord Account Not Linked</h1>
-      <p class="muted">
-        Your Discord account isn't linked to a Minecraft IGN yet.
-        Ask a banker to run <code>/create-tos</code> for you in Discord and sign it -
-        that's what links your account for the website (and for self-service commands like <code>/withdraw</code>).
-      </p>
-      <p class="muted" id="discord-info"></p>
-      <div class="landing-actions">
-        <a class="button secondary" href="/">Back</a>
+  <div class="page" style="padding-top:60px">
+    <div style="text-align:center; margin-bottom:32px">
+      <div class="brand-mark" style="margin:0 auto 20px; width:56px; height:56px; font-size:20px; border-radius:16px;">🏦</div>
+      <h1 style="font-size:1.8rem; margin:0 0 8px">Open a Poy Enterprises Bank Account</h1>
+      <p class="muted" id="discord-info" style="max-width:520px; margin:0 auto"></p>
+    </div>
+
+    <!-- Step 1: claim IGN + sign ToS -->
+    <div id="signup-section">
+      <div class="card">
+        <h2>Terms of Service</h2>
+        <div id="tos-text" style="max-height:340px; overflow-y:auto; padding-right:12px; font-size:0.88rem; line-height:1.6; color:var(--muted)"></div>
       </div>
+
+      <div class="card">
+        <h2>Claim Your Account</h2>
+        <form id="open-account-form" class="withdraw-form" style="flex-direction:column; align-items:stretch">
+          <input type="text" id="signup-ign" placeholder="Your Minecraft IGN" maxlength="32" required />
+          <label style="display:flex; gap:10px; align-items:flex-start; font-size:0.85rem; color:var(--muted); margin:4px 0">
+            <input type="checkbox" id="signup-agree" style="margin-top:3px" required />
+            <span>I have read the Terms of Service above and consent and agree to abide by them.</span>
+          </label>
+          <button type="submit" style="align-self:flex-start">Continue</button>
+        </form>
+        <p class="field-hint" id="signup-error" style="display:none; color:var(--danger, #f56b7c)"></p>
+      </div>
+    </div>
+
+    <!-- Step 2: waiting on the verification payment -->
+    <div id="pending-section" class="card" style="display:none">
+      <h2>Verify Your Account</h2>
+      <p class="muted">
+        One last step - this proves you actually control the Minecraft account
+        <strong id="pending-ign"></strong>, since we've all seen what happens when accounts get taken at face value.
+      </p>
+      <p style="font-family:var(--mono); font-size:0.95rem; background:#070a13; border:1px solid var(--border-light); border-radius:var(--radius-sm); padding:14px">
+        In-game, run:<br />
+        <strong>/db pay into PoyEnterprises 1</strong>
+      </p>
+      <p class="muted">
+        Send at least <strong>$1</strong> - any amount works, we're just confirming the payment came from
+        <strong id="pending-ign-2"></strong>. This page checks automatically and moves you to your account
+        within about a minute of the payment settling.
+      </p>
+      <p class="sync-pill" id="pending-status">Waiting for payment...</p>
+    </div>
+
+    <div class="landing-actions" style="justify-content:center; margin-top:24px">
+      <a class="button secondary" href="/">Back</a>
     </div>
   </div>
   <script src="/particles.js"></script>

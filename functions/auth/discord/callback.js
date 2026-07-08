@@ -52,10 +52,23 @@ export async function onRequestGet({ request, env }) {
   }
 
   if (!ign) {
+    // No linked IGN yet - still issue a real signed session (role:
+    // "unlinked") so the self-serve account-opening form on not-linked.html
+    // has a verified Discord identity to act on, instead of trusting the
+    // discord_id query param below (which is display-only and easily
+    // spoofed - anyone could edit it in the URL).
+    const cookie = await createSessionCookie(
+      env.SESSION_SECRET,
+      { role: "unlinked", discord_id: discordUser.id, username: discordUser.username || "" },
+      60 * 60 * 24 // 1 day - this is just to get through account opening, not a long-lived session
+    );
     const dest = new URL("/not-linked.html", request.url);
     dest.searchParams.set("discord_id", discordUser.id);
     dest.searchParams.set("discord_username", discordUser.username || "");
-    return Response.redirect(dest, 302);
+    return new Response(null, {
+      status: 302,
+      headers: { Location: dest.toString(), "Set-Cookie": cookie },
+    });
   }
 
   const cookie = await createSessionCookie(
