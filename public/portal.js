@@ -172,12 +172,15 @@ async function submitAction(payload, formEl) {
       showStatus(body.error || "Something went wrong.", false);
       return;
     }
-    showStatus(
-      body.instant
-        ? "Done - sent instantly. Your balance below is already up to date."
-        : "Done - your balance below is updated. Fully settles with the bot within about a minute.",
-      true
-    );
+    let message;
+    if (body.instant) {
+      message = "Done - sent instantly. Your balance below is already up to date.";
+    } else if (payload.type === "withdraw_savings") {
+      message = "Request submitted - needs the owner's approval before anything is paid out. Your balance won't change until then.";
+    } else {
+      message = "Done - your balance below is updated. Fully settles with the bot within about a minute.";
+    }
+    showStatus(message, true);
     const data = await loadPortalData();
     if (data) render(data);
   } finally {
