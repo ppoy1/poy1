@@ -82,8 +82,7 @@ export async function onRequestPost({ request, env }) {
   }
 
   const entry = await enqueueAdminAction(env.POYBANK_KV, {
-    type: body.type,
-    request_id: body.request_id,
+    ...body,
     admin_discord_id: session.discord_id,
   });
 
