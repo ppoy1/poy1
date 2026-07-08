@@ -34,6 +34,8 @@ function render(data) {
   document.getElementById("total-loans").textContent = fmt(data.summary?.total_loans_outstanding);
   const clients = data.clients || {};
   document.getElementById("client-count").textContent = Object.keys(clients).length;
+  document.getElementById("active-now").textContent = data.activity?.active_now ?? 0;
+  document.getElementById("active-today").textContent = data.activity?.active_today ?? 0;
 
   document.querySelectorAll(".sync-pill").forEach((el) => {
     el.textContent = `Synced ${data.synced_at || "unknown"}`;

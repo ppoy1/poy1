@@ -3,12 +3,15 @@
 
 import { verifySession } from "../../_lib/session.js";
 import { readSnapshot } from "../../_lib/kv.js";
+import { recordActivity } from "../../_lib/activity.js";
 
 export async function onRequestGet({ request, env }) {
   const session = await verifySession(env.SESSION_SECRET, request.headers.get("Cookie"));
   if (!session || (session.role !== "client" && session.role !== "admin") || !session.ign) {
     return Response.json({ error: "Not authenticated" }, { status: 401 });
   }
+
+  await recordActivity(env.POYBANK_KV, session.discord_id);
 
   const snapshot = await readSnapshot(env.POYBANK_KV);
   if (!snapshot) {

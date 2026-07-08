@@ -2,6 +2,7 @@
 
 import { verifySession } from "../../_lib/session.js";
 import { readSnapshot } from "../../_lib/kv.js";
+import { getActivityCounts } from "../../_lib/activity.js";
 
 export async function onRequestGet({ request, env }) {
   const session = await verifySession(env.SESSION_SECRET, request.headers.get("Cookie"));
@@ -14,5 +15,7 @@ export async function onRequestGet({ request, env }) {
     return Response.json({ error: "No data synced yet - try again shortly" }, { status: 503 });
   }
 
-  return Response.json({ ...snapshot, admin_username: session.username || "Owner" });
+  const activity = await getActivityCounts(env.POYBANK_KV);
+
+  return Response.json({ ...snapshot, admin_username: session.username || "Owner", activity });
 }
