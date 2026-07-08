@@ -134,7 +134,9 @@ document.getElementById("withdrawals-body").addEventListener("click", async (e) 
       btn.textContent = type === "accept_savings_withdrawal" ? "Approve" : "Deny";
       return;
     }
-    row.innerHTML = `<td colspan="3" class="muted-cell">Submitted - the bot processes this within about a minute.</td>`;
+    row.innerHTML = body.instant
+      ? `<td colspan="3" class="muted-cell">Approved - paid out instantly.</td>`
+      : `<td colspan="3" class="muted-cell">Submitted - the bot processes this within about a minute.</td>`;
   } catch {
     alert("Couldn't reach the server. Try again shortly.");
     row.querySelectorAll("button").forEach((b) => (b.disabled = false));

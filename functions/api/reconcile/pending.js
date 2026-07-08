@@ -1,8 +1,9 @@
-// GET /api/reconcile/pending - the bot polls this (every ~60s) to learn
-// about Deposit withdrawals the website already paid out directly via the
-// Treasury API, so it can update its own local balance/history records.
-// It must NOT call the Treasury API again for these - the money already
-// moved; this is bookkeeping-only.
+// GET /api/reconcile/pending - the bot polls this (every ~60s, and
+// on-demand before certain Discord commands) to learn about Deposit
+// withdrawals or Savings approvals the website already paid out directly
+// via the Treasury API, so it can update its own local balance/history/
+// pending_withdrawals records. It must NOT call the Treasury API again for
+// these - the money already moved; this is bookkeeping-only.
 
 import { readProcessedWithdrawals } from "../../_lib/reconcile.js";
 

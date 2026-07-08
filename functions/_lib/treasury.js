@@ -4,11 +4,13 @@
 // on purpose: this is real money movement, and any drift between the two
 // implementations is exactly the kind of thing that causes bugs.
 //
-// Only ever used for a narrow, explicit purpose: an instant Deposit
-// withdrawal initiated by the account owner themselves, for their own
-// money, with no approval step (mirrors the bot's existing "instant,
-// no-approval" Deposit withdrawal rule exactly - Savings still always goes
-// through /accept or /deny, unchanged).
+// Used for two narrow, explicit purposes, both mirroring an existing
+// no-further-approval-needed bot action exactly: an instant Deposit
+// withdrawal initiated by the account owner themselves (no approval step,
+// same as the bot's own instant Deposit withdrawal rule), and an admin's
+// approval of an already-pending Savings withdrawal request (the approval
+// decision itself still requires the owner - this only skips the ~60s
+// wait for the bot to carry out a decision that's already been made).
 
 const DC_ECONOMY_BASE = "https://api.democracycraft.net/economy/api/v1";
 const DC_FIRM_NAME = "PoyEnterprises"; // not secret - same value as bot.py's DC_FIRM_NAME
