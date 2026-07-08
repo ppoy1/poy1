@@ -153,45 +153,56 @@ function showStatus(message, ok) {
   }, 6000);
 }
 
-async function submitAction(payload) {
-  const res = await fetch("/api/actions/submit", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  const body = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    showStatus(body.error || "Something went wrong.", false);
-    return;
+async function submitAction(payload, formEl) {
+  // Disabling the submit button immediately (not just awaiting the
+  // request) is the actual double-click guard - a fresh idempotency key is
+  // minted per request server-side specifically so retries of genuinely
+  // separate submissions aren't silently merged, which means a double-click
+  // wouldn't be caught by that mechanism and needs to be stopped here.
+  const buttons = formEl ? formEl.querySelectorAll("button") : [];
+  buttons.forEach((b) => (b.disabled = true));
+  try {
+    const res = await fetch("/api/actions/submit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      showStatus(body.error || "Something went wrong.", false);
+      return;
+    }
+    showStatus("Done - your balance below is updated. Fully settles with the bot within about a minute.", true);
+    const data = await loadPortalData();
+    if (data) render(data);
+  } finally {
+    buttons.forEach((b) => (b.disabled = false));
   }
-  showStatus("Done - your balance below is updated. Fully settles with the bot within about a minute.", true);
-  const data = await loadPortalData();
-  if (data) render(data);
 }
 
 document.getElementById("withdraw-deposit-form").addEventListener("submit", async (e) => {
   e.preventDefault();
   const amount = document.getElementById("withdraw-deposit-amount").value;
-  await submitAction({ type: "withdraw_deposit", amount });
+  await submitAction({ type: "withdraw_deposit", amount }, e.target);
 });
 
 document.getElementById("withdraw-savings-form").addEventListener("submit", async (e) => {
   e.preventDefault();
   const amount = document.getElementById("withdraw-savings-amount").value;
-  await submitAction({ type: "withdraw_savings", amount });
+  await submitAction({ type: "withdraw_savings", amount }, e.target);
 });
 
 document.getElementById("claim-form").addEventListener("submit", async (e) => {
   e.preventDefault();
   const account_type = document.getElementById("claim-account-type").value;
-  await submitAction({ type: "claim_deposit", account_type });
+  await submitAction({ type: "claim_deposit", account_type }, e.target);
 });
 
 document.getElementById("transfer-form").addEventListener("submit", async (e) => {
   e.preventDefault();
   const amount = document.getElementById("transfer-amount").value;
   const type = document.getElementById("transfer-destination").value;
-  await submitAction({ type, amount });
+  await submitAction({ type, amount }, e.target);
 });
 
 // ---------- Tab switching ----------
