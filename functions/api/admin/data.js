@@ -16,6 +16,9 @@ export async function onRequestGet({ request, env }) {
   }
 
   const activity = await getActivityCounts(env.POYBANK_KV);
+  const admin_avatar_url = session.avatar
+    ? `https://cdn.discordapp.com/avatars/${session.discord_id}/${session.avatar}.png?size=64`
+    : null;
 
-  return Response.json({ ...snapshot, admin_username: session.username || "Owner", activity });
+  return Response.json({ ...snapshot, admin_username: session.username || "Owner", admin_avatar_url, activity });
 }

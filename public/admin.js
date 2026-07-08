@@ -28,7 +28,15 @@ function clientRow(ign, client) {
 
 function render(data) {
   document.getElementById("sidebar-username").textContent = data.admin_username || "Owner";
-  document.getElementById("sidebar-avatar").textContent = (data.admin_username || "?").charAt(0).toUpperCase();
+  const avatarEl = document.getElementById("sidebar-avatar");
+  if (data.admin_avatar_url) {
+    avatarEl.textContent = "";
+    avatarEl.style.backgroundImage = `url(${data.admin_avatar_url})`;
+    avatarEl.style.backgroundSize = "cover";
+    avatarEl.style.backgroundPosition = "center";
+  } else {
+    avatarEl.textContent = (data.admin_username || "?").charAt(0).toUpperCase();
+  }
 
   document.getElementById("total-deposits").textContent = fmt(data.summary?.total_deposits_held);
   document.getElementById("total-loans").textContent = fmt(data.summary?.total_loans_outstanding);

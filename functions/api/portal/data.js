@@ -29,11 +29,16 @@ export async function onRequestGet({ request, env }) {
     (l) => (l.minecraft_ign || "").toLowerCase() === ignLower
   );
 
+  const avatar_url = session.avatar
+    ? `https://cdn.discordapp.com/avatars/${session.discord_id}/${session.avatar}.png?size=64`
+    : null;
+
   return Response.json({
     ign: session.ign,
     account,
     loans,
     synced_at: snapshot.synced_at,
     is_admin: session.role === "admin",
+    avatar_url,
   });
 }

@@ -80,7 +80,15 @@ async function loadPortalData() {
 
 function render(data) {
   document.getElementById("sidebar-username").textContent = data.ign;
-  document.getElementById("sidebar-avatar").textContent = (data.ign || "?").charAt(0).toUpperCase();
+  const avatarEl = document.getElementById("sidebar-avatar");
+  if (data.avatar_url) {
+    avatarEl.textContent = "";
+    avatarEl.style.backgroundImage = `url(${data.avatar_url})`;
+    avatarEl.style.backgroundSize = "cover";
+    avatarEl.style.backgroundPosition = "center";
+  } else {
+    avatarEl.textContent = (data.ign || "?").charAt(0).toUpperCase();
+  }
 
   if (data.is_admin) {
     document.getElementById("admin-nav-category").style.display = "";

@@ -42,7 +42,7 @@ export async function onRequestGet({ request, env }) {
   if (env.OWNER_DISCORD_ID && discordUser.id === env.OWNER_DISCORD_ID) {
     const cookie = await createSessionCookie(
       env.SESSION_SECRET,
-      { role: "admin", discord_id: discordUser.id, username: discordUser.username, ign: ign || null },
+      { role: "admin", discord_id: discordUser.id, username: discordUser.username, avatar: discordUser.avatar || null, ign: ign || null },
       60 * 60 * 24 * 7 // 7 days
     );
     return new Response(null, {
@@ -59,7 +59,7 @@ export async function onRequestGet({ request, env }) {
     // spoofed - anyone could edit it in the URL).
     const cookie = await createSessionCookie(
       env.SESSION_SECRET,
-      { role: "unlinked", discord_id: discordUser.id, username: discordUser.username || "" },
+      { role: "unlinked", discord_id: discordUser.id, username: discordUser.username || "", avatar: discordUser.avatar || null },
       60 * 60 * 24 // 1 day - this is just to get through account opening, not a long-lived session
     );
     const dest = new URL("/not-linked.html", request.url);
@@ -73,7 +73,7 @@ export async function onRequestGet({ request, env }) {
 
   const cookie = await createSessionCookie(
     env.SESSION_SECRET,
-    { role: "client", discord_id: discordUser.id, ign },
+    { role: "client", discord_id: discordUser.id, username: discordUser.username, avatar: discordUser.avatar || null, ign },
     60 * 60 * 24 * 7 // 7 days
   );
 
