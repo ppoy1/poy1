@@ -172,7 +172,12 @@ async function submitAction(payload, formEl) {
       showStatus(body.error || "Something went wrong.", false);
       return;
     }
-    showStatus("Done - your balance below is updated. Fully settles with the bot within about a minute.", true);
+    showStatus(
+      body.instant
+        ? "Done - sent instantly. Your balance below is already up to date."
+        : "Done - your balance below is updated. Fully settles with the bot within about a minute.",
+      true
+    );
     const data = await loadPortalData();
     if (data) render(data);
   } finally {
