@@ -28,7 +28,6 @@
       <div class="card">
         <h2>Claim Your Account</h2>
         <form id="open-account-form" class="withdraw-form" style="flex-direction:column; align-items:stretch">
-          <input type="text" id="signup-ign" placeholder="Your Minecraft IGN" maxlength="32" required />
           <label style="display:flex; gap:10px; align-items:flex-start; font-size:0.85rem; color:var(--muted); margin:4px 0">
             <input type="checkbox" id="signup-agree" style="margin-top:3px" required />
             <span>I have read the Terms of Service above and consent and agree to abide by them.</span>
@@ -39,21 +38,23 @@
       </div>
     </div>
 
-    <!-- Step 2: waiting on the verification payment -->
+    <!-- Step 2: waiting on the verification payment. No IGN is asked for
+         anywhere on this page - whoever sends the exact amount below gets
+         linked automatically, so there's nothing to impersonate by typing
+         a name. -->
     <div id="pending-section" class="card" style="display:none">
       <h2>Verify Your Account</h2>
       <p class="muted">
-        One last step - this proves you actually control the Minecraft account
-        <strong id="pending-ign"></strong>, since we've all seen what happens when accounts get taken at face value.
+        One last step - we don't know your Minecraft account yet, and this payment is how we find out. Whichever
+        in-game account sends it gets linked to this Discord account automatically.
       </p>
       <p style="font-family:var(--mono); font-size:0.95rem; background:#070a13; border:1px solid var(--border-light); border-radius:var(--radius-sm); padding:14px">
         In-game, run:<br />
         <strong>/db pay into PoyEnterprises <span id="pending-amount"></span></strong>
       </p>
       <p class="muted">
-        Send <strong>exactly this amount</strong> - it has to match precisely, since that's what proves the
-        payment was actually made by <strong id="pending-ign-2"></strong> in response to this specific request,
-        not just an unrelated payment that happened to come from that name. This page checks automatically and
+        Send <strong>exactly this amount</strong> from your own account - it has to match precisely, since the
+        exact amount (not just any payment) is what proves who you are. This page checks automatically and
         moves you to your account within about a minute of the payment settling.
       </p>
       <p class="sync-pill" id="pending-status">Waiting for payment...</p>

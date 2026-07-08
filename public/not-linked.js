@@ -86,7 +86,6 @@ function showError(message) {
 document.getElementById("open-account-form").addEventListener("submit", async (e) => {
   e.preventDefault();
   const btn = e.target.querySelector("button[type=submit]");
-  const ign = document.getElementById("signup-ign").value.trim();
   const agree = document.getElementById("signup-agree").checked;
 
   btn.disabled = true;
@@ -94,7 +93,7 @@ document.getElementById("open-account-form").addEventListener("submit", async (e
     const res = await fetch("/api/account/open", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ minecraft_ign: ign, agree }),
+      body: JSON.stringify({ agree }),
     });
     const body = await res.json().catch(() => ({}));
     if (!res.ok) {
@@ -102,7 +101,7 @@ document.getElementById("open-account-form").addEventListener("submit", async (e
       btn.disabled = false;
       return;
     }
-    enterPendingState(ign, body.entry?.verification_amount);
+    enterPendingState(body.entry?.verification_amount);
   } catch {
     showError("Couldn't reach the server. Try again shortly.");
     btn.disabled = false;
@@ -111,12 +110,10 @@ document.getElementById("open-account-form").addEventListener("submit", async (e
 
 let statusPollTimer = null;
 
-function enterPendingState(ign, amount) {
+function enterPendingState(amount) {
   document.getElementById("signup-section").style.display = "none";
   const pendingSection = document.getElementById("pending-section");
   pendingSection.style.display = "";
-  document.getElementById("pending-ign").textContent = ign;
-  document.getElementById("pending-ign-2").textContent = ign;
   document.getElementById("pending-amount").textContent = amount || "?";
   pollStatus();
   statusPollTimer = setInterval(pollStatus, 10000);
@@ -129,7 +126,7 @@ async function pollStatus() {
     const data = await res.json();
     if (data.status === "linked") {
       clearInterval(statusPollTimer);
-      document.getElementById("pending-status").textContent = "Verified! Redirecting...";
+      document.getElementById("pending-status").textContent = `Verified as ${data.ign}! Redirecting...`;
       setTimeout(() => (window.location.href = "/portal.html"), 1200);
     } else if (data.status === "pending") {
       document.getElementById("pending-status").textContent = "Waiting for payment...";
@@ -150,7 +147,7 @@ async function pollStatus() {
     if (data.status === "linked") {
       window.location.href = "/portal.html";
     } else if (data.status === "pending") {
-      enterPendingState(data.ign, data.verification_amount);
+      enterPendingState(data.verification_amount);
     }
   } catch {
     // Not logged in as "unlinked" role, or a transient error - leave the

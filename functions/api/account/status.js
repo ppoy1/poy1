@@ -26,7 +26,6 @@ export async function onRequestGet({ request, env }) {
   if (pending) {
     return Response.json({
       status: "pending",
-      ign: pending.minecraft_ign,
       verification_amount: pending.verification_amount,
       requested_at: pending.requested_at,
     });
