@@ -913,6 +913,23 @@ td.muted-cell {
   flex-shrink: 0;
 }
 
+.icon-btn-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.icon-btn-label {
+  font-size: 0.6rem;
+  color: var(--muted-2);
+  font-family: var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
 .icon-btn {
   display: inline-flex;
   align-items: center;
