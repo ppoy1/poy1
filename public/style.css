@@ -914,6 +914,9 @@ td.muted-cell {
 }
 
 .icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: var(--panel-2) !important;
   border: 1px solid var(--border-light) !important;
   color: var(--muted) !important;
@@ -922,6 +925,7 @@ td.muted-cell {
   padding: 0 !important;
   border-radius: var(--radius-sm) !important;
   box-shadow: none !important;
+  text-decoration: none;
 }
 
 .icon-btn:hover {
@@ -929,6 +933,15 @@ td.muted-cell {
   border-color: var(--bad) !important;
   box-shadow: 0 0 12px -4px rgba(255, 92, 124, 0.5) !important;
   transform: none !important;
+}
+
+/* Joining the Discord isn't a destructive action like logout, so it gets
+   Discord's own brand color on hover instead of inheriting the red
+   "danger" hover meant for the sign-out button. */
+.icon-btn.discord-link:hover {
+  color: #5865F2 !important;
+  border-color: #5865F2 !important;
+  box-shadow: 0 0 12px -4px rgba(88, 101, 242, 0.5) !important;
 }
 
 .icon-btn svg {
