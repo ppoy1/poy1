@@ -102,7 +102,7 @@ document.getElementById("open-account-form").addEventListener("submit", async (e
       btn.disabled = false;
       return;
     }
-    enterPendingState(ign);
+    enterPendingState(ign, body.entry?.verification_amount);
   } catch {
     showError("Couldn't reach the server. Try again shortly.");
     btn.disabled = false;
@@ -111,12 +111,13 @@ document.getElementById("open-account-form").addEventListener("submit", async (e
 
 let statusPollTimer = null;
 
-function enterPendingState(ign) {
+function enterPendingState(ign, amount) {
   document.getElementById("signup-section").style.display = "none";
   const pendingSection = document.getElementById("pending-section");
   pendingSection.style.display = "";
   document.getElementById("pending-ign").textContent = ign;
   document.getElementById("pending-ign-2").textContent = ign;
+  document.getElementById("pending-amount").textContent = amount || "?";
   pollStatus();
   statusPollTimer = setInterval(pollStatus, 10000);
 }
@@ -149,7 +150,7 @@ async function pollStatus() {
     if (data.status === "linked") {
       window.location.href = "/portal.html";
     } else if (data.status === "pending") {
-      enterPendingState(data.ign);
+      enterPendingState(data.ign, data.verification_amount);
     }
   } catch {
     // Not logged in as "unlinked" role, or a transient error - leave the

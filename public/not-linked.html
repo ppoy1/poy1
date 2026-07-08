@@ -48,12 +48,13 @@
       </p>
       <p style="font-family:var(--mono); font-size:0.95rem; background:#070a13; border:1px solid var(--border-light); border-radius:var(--radius-sm); padding:14px">
         In-game, run:<br />
-        <strong>/db pay into PoyEnterprises 1</strong>
+        <strong>/db pay into PoyEnterprises <span id="pending-amount"></span></strong>
       </p>
       <p class="muted">
-        Send at least <strong>$1</strong> - any amount works, we're just confirming the payment came from
-        <strong id="pending-ign-2"></strong>. This page checks automatically and moves you to your account
-        within about a minute of the payment settling.
+        Send <strong>exactly this amount</strong> - it has to match precisely, since that's what proves the
+        payment was actually made by <strong id="pending-ign-2"></strong> in response to this specific request,
+        not just an unrelated payment that happened to come from that name. This page checks automatically and
+        moves you to your account within about a minute of the payment settling.
       </p>
       <p class="sync-pill" id="pending-status">Waiting for payment...</p>
     </div>

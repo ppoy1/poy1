@@ -24,7 +24,12 @@ export async function onRequestGet({ request, env }) {
 
   const pending = await findPendingAccountOpening(env.POYBANK_KV, session.discord_id);
   if (pending) {
-    return Response.json({ status: "pending", ign: pending.minecraft_ign, requested_at: pending.requested_at });
+    return Response.json({
+      status: "pending",
+      ign: pending.minecraft_ign,
+      verification_amount: pending.verification_amount,
+      requested_at: pending.requested_at,
+    });
   }
 
   return Response.json({ status: "none" });
