@@ -76,11 +76,6 @@ function render(data) {
       </td>
       <td>$${fmt(loan.owed)}</td>
       <td><span class="badge">${loan.next_installment || ""} &middot; ${loan.next_due_date || ""}</span></td>
-      <td style="text-align:right; white-space:nowrap">
-        <button class="secondary" data-loan-action="add_late_fine" data-ign="${ign}">Late Fine</button>
-        <button class="secondary" data-loan-action="loan_change" data-ign="${ign}">Change Total</button>
-        <button class="secondary" data-loan-action="remove_loan" data-ign="${ign}">Remove</button>
-      </td>
     `;
     loansBody.appendChild(tr);
   }
@@ -145,95 +140,6 @@ document.getElementById("withdrawals-body").addEventListener("click", async (e) 
     row.innerHTML = body.instant
       ? `<td colspan="3" class="muted-cell">Approved - paid out instantly.</td>`
       : `<td colspan="3" class="muted-cell">Submitted - the bot processes this within about a minute.</td>`;
-  } catch {
-    alert("Couldn't reach the server. Try again shortly.");
-    row.querySelectorAll("button").forEach((b) => (b.disabled = false));
-  }
-});
-
-// ---------- Loans management ----------
-
-document.getElementById("add-loan-form").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const btn = e.target.querySelector("button[type=submit]");
-  btn.disabled = true;
-  try {
-    const res = await fetch("/api/admin/actions/submit", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        type: "add_loan_entry",
-        borrower_name: document.getElementById("loan-borrower-name").value,
-        minecraft_ign: document.getElementById("loan-ign").value,
-        amount: document.getElementById("loan-amount").value,
-        weekly_payment: document.getElementById("loan-weekly-payment").value,
-        payday: document.getElementById("loan-payday").value,
-      }),
-    });
-    const body = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      alert(body.error || "Something went wrong.");
-      return;
-    }
-    alert("Loan entry submitted - the bot processes this within about a minute.");
-    e.target.reset();
-  } catch {
-    alert("Couldn't reach the server. Try again shortly.");
-  } finally {
-    btn.disabled = false;
-  }
-});
-
-document.getElementById("loans-body").addEventListener("click", async (e) => {
-  const btn = e.target.closest("button[data-loan-action]");
-  if (!btn) return;
-  const type = btn.dataset.loanAction;
-  const ign = btn.dataset.ign;
-  if (!ign) {
-    alert("This loan has no Minecraft IGN on record, so it can't be targeted from the website - use Discord for this one.");
-    return;
-  }
-
-  const payload = { type, minecraft_ign: ign };
-
-  if (type === "add_late_fine") {
-    const lateDays = prompt(`How many days late is ${ign}'s payment?`);
-    if (lateDays === null) return;
-    payload.late_days = Number(lateDays);
-    if (!(payload.late_days > 0)) {
-      alert("Days late must be a number greater than 0.");
-      return;
-    }
-  } else if (type === "loan_change") {
-    const newTotal = prompt(`Set ${ign}'s new total amount owed to:`);
-    if (newTotal === null) return;
-    payload.new_total_owed = Number(newTotal);
-    if (!(payload.new_total_owed > 0)) {
-      alert("New total owed must be a number greater than 0.");
-      return;
-    }
-  } else if (type === "remove_loan") {
-    if (!confirm(`Remove ${ign}'s loan from the ledger? This can't be undone from the website.`)) return;
-  }
-
-  const row = btn.closest("tr");
-  row.querySelectorAll("button").forEach((b) => (b.disabled = true));
-
-  try {
-    const res = await fetch("/api/admin/actions/submit", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    const body = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      alert(body.error || "Something went wrong.");
-      row.querySelectorAll("button").forEach((b) => (b.disabled = false));
-      return;
-    }
-    alert("Submitted - the bot processes this within about a minute.");
-    const data = await loadAdminData();
-    if (data) render(data);
   } catch {
     alert("Couldn't reach the server. Try again shortly.");
     row.querySelectorAll("button").forEach((b) => (b.disabled = false));
