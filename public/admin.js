@@ -34,6 +34,7 @@ function clientRow(ign, client) {
 }
 
 function render(data) {
+  isOwner = !!data.is_owner;
   document.getElementById("sidebar-username").textContent = data.admin_username || "Owner";
   const avatarEl = document.getElementById("sidebar-avatar");
   if (data.admin_avatar_url) {
@@ -267,6 +268,11 @@ let allVentures = [];
 let currentVentureId = null;
 let ventureImageDataUrl = null;
 const ventureFilters = { status: "all", tag: null, query: "" };
+// Set from /api/admin/data's is_owner flag (see render()) - today every
+// admin session already IS the owner, but the Delete button is gated on
+// this explicitly rather than "the whole page is admin-only" so it stays
+// correct if that ever changes.
+let isOwner = false;
 
 // Normalizes any uploaded photo to a bounded JPEG before it goes anywhere
 // near the network - there's no object storage (R2) wired up yet, so
@@ -524,6 +530,12 @@ function renderVentureModal() {
     `by ${ventureByline(idea)} &middot; ${fmtDate((idea.createdAt || "").split("T")[0])} &middot; ${isClosed ? "Closed" : "Open"}`;
 
   const thumbHtml = idea.image ? `<img class="venture-thumb" src="${idea.image}" alt="" />` : "";
+  // Delete is an owner-only moderation tool, not tied to who posted it -
+  // only ever rendered when the logged-in session is actually the owner
+  // (isOwner, set from /api/admin/data's is_owner flag in render()).
+  const deleteBtnHtml = isOwner
+    ? `<button class="secondary venture-delete" data-id="${idea.id}" style="color:var(--bad); border-color:var(--bad)">Delete</button>`
+    : "";
   document.getElementById("venture-modal-body").innerHTML = `
     <div>${ventureTagsHtml(idea)}</div>
     ${thumbHtml}
@@ -532,9 +544,7 @@ function renderVentureModal() {
       <button class="secondary venture-toggle-status" data-id="${idea.id}" data-status="${isClosed ? "open" : "closed"}">
         ${isClosed ? "Reopen" : "Mark Closed"}
       </button>
-      <button class="secondary venture-delete" data-id="${idea.id}" style="color:var(--bad); border-color:var(--bad)">
-        Delete
-      </button>
+      ${deleteBtnHtml}
     </div>
     <h2 style="font-size:0.85rem; margin-top:18px">Thread</h2>
     <div class="venture-comments">${ventureCommentsHtml(idea.comments)}</div>

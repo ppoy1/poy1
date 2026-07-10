@@ -40,5 +40,6 @@ export async function onRequestGet({ request, env }) {
     synced_at: snapshot.synced_at,
     is_admin: session.role === "admin",
     avatar_url,
+    savings_rate: snapshot.savings_rate || null,
   });
 }

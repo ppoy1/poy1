@@ -99,6 +99,16 @@ function render(data) {
   document.getElementById("dep-deposit-balance").textContent = fmt(data.account.deposit_balance);
   document.getElementById("sav-savings-balance").textContent = fmt(data.account.savings_balance);
 
+  if (data.savings_rate) {
+    const rateLabel = `${Number(data.savings_rate)}% / mo`;
+    const ovBadge = document.getElementById("ov-rate-badge");
+    const savBadge = document.getElementById("sav-rate-badge");
+    ovBadge.textContent = rateLabel;
+    ovBadge.style.display = "";
+    savBadge.textContent = rateLabel;
+    savBadge.style.display = "";
+  }
+
   document.querySelectorAll(".sync-pill").forEach((el) => {
     el.textContent = `Synced ${data.synced_at || "unknown"}`;
   });

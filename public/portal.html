@@ -108,7 +108,7 @@
             </div>
             <div class="stat-card">
               <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12V8a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-1"/><path d="M18 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z"/><path d="M2 8h14"/></svg></div>
-              <h2>Savings Account</h2>
+              <h2>Savings Account <span class="badge" id="ov-rate-badge" style="display:none"></span></h2>
               <div class="balance-amount">$<span id="ov-savings-balance">0</span></div>
               <a href="#" class="goto-tab manage-link" data-tab="savings">Manage Savings Account <span class="arrow">&rarr;</span></a>
             </div>
@@ -208,7 +208,7 @@
 
           <div class="stat-card" style="margin-bottom:20px">
             <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12V8a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-1"/><path d="M18 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z"/><path d="M2 8h14"/></svg></div>
-            <h2>Savings Balance</h2>
+            <h2>Savings Balance <span class="badge" id="sav-rate-badge" style="display:none"></span></h2>
             <div class="balance-amount">$<span id="sav-savings-balance">0</span></div>
             <form class="withdraw-form" id="withdraw-savings-form">
               <input type="number" step="0.01" min="0.01" placeholder="Amount" id="withdraw-savings-amount" required />
