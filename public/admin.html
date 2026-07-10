@@ -309,9 +309,16 @@
           </div>
 
           <div class="card">
-            <h2>All Ideas</h2>
-            <div id="ventures-list"></div>
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap">
+              <h2 style="margin:0">All Ideas</h2>
+              <form id="venture-search-form" class="withdraw-form" style="margin:0">
+                <input type="text" id="venture-search" placeholder="Search ideas..." />
+                <button type="submit" class="secondary">Search</button>
+              </form>
+            </div>
+            <div id="ventures-list" style="margin-top:16px"></div>
             <p class="field-hint" id="ventures-empty" style="display:none">No business ideas posted yet.</p>
+            <p class="field-hint" id="ventures-no-match" style="display:none">No ideas match your search.</p>
           </div>
         </section>
 

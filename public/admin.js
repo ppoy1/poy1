@@ -259,6 +259,27 @@ function escapeHtml(str) {
 
 const VENTURE_TAG_LABELS = { partners: "Partners", investment: "Investment", advice: "Advice / Information" };
 
+// Cache of the last-fetched list, so the search box can filter without a
+// round-trip - the beta only has one user (the owner) posting to a small
+// KV blob, so there's no pagination/dataset-size concern yet.
+let allVentures = [];
+
+function ventureCommentsHtml(comments) {
+  if (!comments || !comments.length) {
+    return `<p class="muted" style="font-size:0.85rem">No messages yet - be the first to reach out.</p>`;
+  }
+  return comments
+    .map(
+      (c) => `
+        <div style="padding:8px 0; border-bottom:1px solid var(--border)">
+          <p class="muted" style="font-size:0.75rem; margin:0 0 2px">${escapeHtml(c.authorUsername || "Unknown")} &middot; ${fmtDate((c.createdAt || "").split("T")[0])}</p>
+          <p style="margin:0; white-space:pre-wrap">${escapeHtml(c.text)}</p>
+        </div>
+      `
+    )
+    .join("");
+}
+
 function ventureCard(idea) {
   const div = document.createElement("div");
   div.className = "card";
@@ -283,6 +304,15 @@ function ventureCard(idea) {
     <button class="secondary venture-toggle-status" data-id="${idea.id}" data-status="${isClosed ? "open" : "closed"}">
       ${isClosed ? "Reopen" : "Mark Closed"}
     </button>
+
+    <div class="card" style="background:var(--panel-2); margin-top:14px">
+      <h2 style="font-size:0.85rem">Discussion</h2>
+      <div class="venture-comments">${ventureCommentsHtml(idea.comments)}</div>
+      <form class="venture-comment-form withdraw-form" data-idea-id="${idea.id}" style="margin-top:10px">
+        <input type="text" class="venture-comment-input" placeholder="Write a message..." maxlength="1000" required />
+        <button type="submit" class="secondary">Send</button>
+      </form>
+    </div>
   `;
   return div;
 }
@@ -290,15 +320,30 @@ function ventureCard(idea) {
 function renderVentures(ideas) {
   const list = document.getElementById("ventures-list");
   const empty = document.getElementById("ventures-empty");
+  const noMatch = document.getElementById("ventures-no-match");
   list.innerHTML = "";
-  if (!ideas.length) {
+  empty.style.display = "none";
+  noMatch.style.display = "none";
+
+  if (!allVentures.length) {
     empty.style.display = "";
     return;
   }
-  empty.style.display = "none";
+  if (!ideas.length) {
+    noMatch.style.display = "";
+    return;
+  }
   for (const idea of ideas) {
     list.appendChild(ventureCard(idea));
   }
+}
+
+function filterVentures(query) {
+  const q = query.trim().toLowerCase();
+  if (!q) return allVentures;
+  return allVentures.filter(
+    (idea) => idea.title.toLowerCase().includes(q) || idea.description.toLowerCase().includes(q)
+  );
 }
 
 async function loadVentures() {
@@ -306,12 +351,19 @@ async function loadVentures() {
     const res = await fetch("/api/business-ideas/list");
     if (!res.ok) return;
     const data = await res.json();
-    renderVentures(data.ideas || []);
+    allVentures = data.ideas || [];
+    const query = document.getElementById("venture-search").value;
+    renderVentures(filterVentures(query));
   } catch {
     // Silent - Ventures tab just stays empty if this fails, same as the
     // other read-only tabs on a transient error.
   }
 }
+
+document.getElementById("venture-search-form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  renderVentures(filterVentures(document.getElementById("venture-search").value));
+});
 
 document.getElementById("venture-form").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -363,6 +415,35 @@ document.getElementById("ventures-list").addEventListener("click", async (e) => 
     }
   } catch {
     btn.disabled = false;
+  }
+});
+
+document.getElementById("ventures-list").addEventListener("submit", async (e) => {
+  const form = e.target.closest(".venture-comment-form");
+  if (!form) return;
+  e.preventDefault();
+  const input = form.querySelector(".venture-comment-input");
+  const btn = form.querySelector("button[type=submit]");
+  const text = input.value.trim();
+  if (!text) return;
+
+  btn.disabled = true;
+  input.disabled = true;
+  try {
+    const res = await fetch("/api/business-ideas/comment", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ideaId: form.dataset.ideaId, text }),
+    });
+    if (res.ok) {
+      loadVentures();
+    } else {
+      btn.disabled = false;
+      input.disabled = false;
+    }
+  } catch {
+    btn.disabled = false;
+    input.disabled = false;
   }
 });
 

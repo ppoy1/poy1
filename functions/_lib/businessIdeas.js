@@ -26,10 +26,33 @@ export async function createBusinessIdea(kv, { title, description, lookingFor, a
     authorUsername,
     status: "open",
     createdAt: new Date().toISOString(),
+    comments: [],
   };
   ideas.unshift(idea);
   await writeBusinessIdeas(kv, ideas);
   return idea;
+}
+
+// Async discussion thread per idea, not live/real-time chat - Cloudflare
+// Pages Functions are request/response, so "live" would need Durable
+// Objects (a much bigger addition than this beta needs). Open to anyone
+// authenticated, not just the idea's author, since the whole point is
+// letting an interested player reach out to the poster.
+export async function addComment(kv, ideaId, { authorDiscordId, authorUsername, text }) {
+  const ideas = await readBusinessIdeas(kv);
+  const idea = ideas.find((i) => i.id === ideaId);
+  if (!idea) return { error: "not_found" };
+  const comment = {
+    id: `${Date.now()}-${crypto.randomUUID()}`,
+    authorDiscordId,
+    authorUsername,
+    text,
+    createdAt: new Date().toISOString(),
+  };
+  idea.comments = idea.comments || [];
+  idea.comments.push(comment);
+  await writeBusinessIdeas(kv, ideas);
+  return { idea };
 }
 
 export async function setBusinessIdeaStatus(kv, id, status, requesterDiscordId) {
