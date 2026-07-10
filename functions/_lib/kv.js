@@ -28,6 +28,13 @@ export async function readSnapshot(kv) {
   return raw ? JSON.parse(raw) : null;
 }
 
+// Same account_links reverse-index lookup already inlined at the OAuth
+// callback and account/status - pulled out here so other features (like
+// Ventures) can resolve a poster's Minecraft IGN without duplicating it.
+export function ignForDiscordId(snapshot, discordId) {
+  return snapshot?.account_links?.[discordId] || null;
+}
+
 // Applies an immediate, optimistic adjustment to the cached snapshot's
 // balance for one client, so the portal reflects a submitted action right
 // away instead of waiting for the bot's next sync (~60s after it actually

@@ -324,6 +324,16 @@ document.getElementById("venture-image").addEventListener("change", async (e) =>
   }
 });
 
+// Discord username is always known (it's who's logged in); the Minecraft
+// IGN comes from the bank's discord_id->IGN link and is null if that
+// Discord account was never linked to an in-game account.
+function ventureByline(entry) {
+  const discord = escapeHtml(entry.authorUsername || "Unknown");
+  return entry.authorIgn
+    ? `${discord} <span class="muted">(MC: ${escapeHtml(entry.authorIgn)})</span>`
+    : discord;
+}
+
 function ventureCommentsHtml(comments) {
   if (!comments || !comments.length) {
     return `<p class="muted" style="font-size:0.85rem">No messages yet - be the first to reach out.</p>`;
@@ -332,7 +342,7 @@ function ventureCommentsHtml(comments) {
     .map(
       (c) => `
         <div style="padding:8px 0; border-bottom:1px solid var(--border)">
-          <p class="muted" style="font-size:0.75rem; margin:0 0 2px">${escapeHtml(c.authorUsername || "Unknown")} &middot; ${fmtDate((c.createdAt || "").split("T")[0])}</p>
+          <p class="muted" style="font-size:0.75rem; margin:0 0 2px">${ventureByline(c)} &middot; ${fmtDate((c.createdAt || "").split("T")[0])}</p>
           <p style="margin:0; white-space:pre-wrap">${escapeHtml(c.text)}</p>
         </div>
       `
@@ -346,12 +356,19 @@ function ventureTagsHtml(idea) {
     .join(" ");
 }
 
-// Compact, click-to-open preview - no inline actions or discussion here on
-// purpose, both now live in the thread modal (see openVentureModal below).
+const VENTURE_PLACEHOLDER_ICON = `
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+    <path d="M2 20h20"/><path d="M4 20V10l4-4 4 4v10"/><path d="M12 20V6l4-4 4 4v14"/>
+  </svg>
+`;
+
+// Fundraiser-card-style preview, per the gnomefundme.org layout the owner
+// referenced: a big image (or a placeholder if none was uploaded) up top
+// with status/tag badges overlaid, then title/byline/snippet below. Click
+// to open opens the thread modal - no inline actions or discussion here.
 function venturePreview(idea) {
   const div = document.createElement("div");
-  div.className = "card venture-preview";
-  div.style.marginBottom = "12px";
+  div.className = "venture-preview";
   div.dataset.id = idea.id;
   const isClosed = idea.status === "closed";
   const statusBadge = isClosed
@@ -359,22 +376,22 @@ function venturePreview(idea) {
     : `<span class="badge badge-good">OPEN</span>`;
   const commentCount = (idea.comments || []).length;
   const snippet = idea.description.length > 140 ? idea.description.slice(0, 140) + "..." : idea.description;
-  const thumbHtml = idea.image
-    ? `<img class="venture-thumb" src="${idea.image}" style="max-height:140px; margin:8px 0" alt="" />`
-    : "";
+  const mediaHtml = idea.image
+    ? `<img src="${idea.image}" alt="" />`
+    : `<div class="venture-tile-media-placeholder">${VENTURE_PLACEHOLDER_ICON}</div>`;
   div.innerHTML = `
-    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px">
-      <div style="min-width:0">
-        <h2 style="margin-bottom:4px">${escapeHtml(idea.title)}</h2>
-        <p class="muted" style="font-size:0.8rem; margin:0">by ${escapeHtml(idea.authorUsername || "Unknown")} &middot; ${fmtDate((idea.createdAt || "").split("T")[0])}</p>
-      </div>
-      ${statusBadge}
+    <div class="venture-tile-media">
+      ${mediaHtml}
+      <div class="venture-tile-badges">${statusBadge}</div>
     </div>
-    ${thumbHtml}
-    <p class="muted" style="white-space:pre-wrap; margin:8px 0">${escapeHtml(snippet)}</p>
-    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:8px">
-      <div>${ventureTagsHtml(idea)}</div>
-      <span class="muted" style="font-size:0.78rem; white-space:nowrap">&#128172; ${commentCount}</span>
+    <div class="venture-tile-body">
+      <h2 style="margin:0">${escapeHtml(idea.title)}</h2>
+      <p class="muted" style="font-size:0.8rem; margin:0">by ${ventureByline(idea)} &middot; ${fmtDate((idea.createdAt || "").split("T")[0])}</p>
+      <p class="muted" style="white-space:pre-wrap; margin:0; flex:1">${escapeHtml(snippet)}</p>
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:8px">
+        <div>${ventureTagsHtml(idea)}</div>
+        <span class="muted" style="font-size:0.78rem; white-space:nowrap">&#128172; ${commentCount}</span>
+      </div>
     </div>
   `;
   return div;
@@ -503,8 +520,8 @@ function renderVentureModal() {
   }
   const isClosed = idea.status === "closed";
   document.getElementById("venture-modal-title").textContent = idea.title;
-  document.getElementById("venture-modal-meta").textContent =
-    `by ${idea.authorUsername || "Unknown"} · ${fmtDate((idea.createdAt || "").split("T")[0])} · ${isClosed ? "Closed" : "Open"}`;
+  document.getElementById("venture-modal-meta").innerHTML =
+    `by ${ventureByline(idea)} &middot; ${fmtDate((idea.createdAt || "").split("T")[0])} &middot; ${isClosed ? "Closed" : "Open"}`;
 
   const thumbHtml = idea.image ? `<img class="venture-thumb" src="${idea.image}" alt="" />` : "";
   document.getElementById("venture-modal-body").innerHTML = `
