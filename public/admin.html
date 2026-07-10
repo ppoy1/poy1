@@ -58,6 +58,10 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.1-2.8-2.8L7 14"/></svg>
             Market
           </button>
+          <button class="nav-link" data-tab="ventures">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 20h20"/><path d="M4 20V10l4-4 4 4v10"/><path d="M12 20V6l4-4 4 4v14"/></svg>
+            Ventures
+          </button>
         </div>
 
         <div class="nav-category">
@@ -271,6 +275,43 @@
               </table>
             </div>
             <p class="field-hint" id="market-empty" style="display:none">No market data synced yet - check back after the next sync cycle.</p>
+          </div>
+        </section>
+
+        <!-- Ventures (Beta) -->
+        <section class="tab-panel" data-panel="ventures">
+          <div class="content-header">
+            <div>
+              <h1>Ventures <span class="badge badge-warn">BETA</span></h1>
+              <p class="muted">Post a business idea and find partners, investment, or advice from other players - owner only for now.</p>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Post a New Idea</h2>
+            <form id="venture-form" class="withdraw-form" style="flex-direction:column; align-items:stretch; gap:12px">
+              <input type="text" id="venture-title" placeholder="Business idea title" maxlength="100" required />
+              <textarea id="venture-description" placeholder="Describe your idea..." maxlength="2000" required rows="4"></textarea>
+              <div style="display:flex; gap:16px; flex-wrap:wrap">
+                <label style="display:flex; gap:8px; align-items:center; font-size:0.85rem; color:var(--muted)">
+                  <input type="checkbox" value="partners" class="venture-tag" /> Partners
+                </label>
+                <label style="display:flex; gap:8px; align-items:center; font-size:0.85rem; color:var(--muted)">
+                  <input type="checkbox" value="investment" class="venture-tag" /> Investment
+                </label>
+                <label style="display:flex; gap:8px; align-items:center; font-size:0.85rem; color:var(--muted)">
+                  <input type="checkbox" value="advice" class="venture-tag" /> Advice / Information
+                </label>
+              </div>
+              <button type="submit" style="align-self:flex-start">Post Idea</button>
+            </form>
+            <p class="field-hint" id="venture-error" style="display:none; color:var(--danger, #f56b7c)"></p>
+          </div>
+
+          <div class="card">
+            <h2>All Ideas</h2>
+            <div id="ventures-list"></div>
+            <p class="field-hint" id="ventures-empty" style="display:none">No business ideas posted yet.</p>
           </div>
         </section>
 

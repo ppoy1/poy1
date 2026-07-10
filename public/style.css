@@ -374,7 +374,7 @@ button:disabled {
   flex-wrap: wrap;
 }
 
-.withdraw-form input:not([type="checkbox"]), .withdraw-form select,
+.withdraw-form input:not([type="checkbox"]), .withdraw-form select, .withdraw-form textarea,
 .center-form input:not([type="checkbox"]), .center-form select,
 .field-select {
   background: #070a13;
@@ -388,16 +388,26 @@ button:disabled {
   outline: none;
 }
 
-.withdraw-form input:not([type="checkbox"]):focus, .withdraw-form select:focus,
+.withdraw-form input:not([type="checkbox"]):focus, .withdraw-form select:focus, .withdraw-form textarea:focus,
 .center-form input:not([type="checkbox"]):focus,
 .field-select:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-soft), 0 0 16px -4px rgba(76, 201, 255, 0.5);
 }
 
-.withdraw-form input:not([type="checkbox"]) {
+.withdraw-form input:not([type="checkbox"]), .withdraw-form textarea {
   flex: 1;
   min-width: 120px;
+}
+
+.withdraw-form textarea {
+  /* Without these, some browsers paint a textarea (unlike <input>) with
+     its own native dark-mode widget chrome underneath our background,
+     ignoring the shared background/border/padding rule above entirely. */
+  appearance: none;
+  color-scheme: dark;
+  resize: vertical;
+  width: 100%;
 }
 
 .withdraw-form input[type="checkbox"] {

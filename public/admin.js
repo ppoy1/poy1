@@ -249,6 +249,125 @@ function renderMarket(market) {
   }
 }
 
+// ---------- Ventures (Beta) ----------
+
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = str ?? "";
+  return div.innerHTML;
+}
+
+const VENTURE_TAG_LABELS = { partners: "Partners", investment: "Investment", advice: "Advice / Information" };
+
+function ventureCard(idea) {
+  const div = document.createElement("div");
+  div.className = "card";
+  div.style.marginBottom = "12px";
+  const tagsHtml = (idea.lookingFor || [])
+    .map((t) => `<span class="badge">${escapeHtml(VENTURE_TAG_LABELS[t] || t)}</span>`)
+    .join(" ");
+  const isClosed = idea.status === "closed";
+  const statusBadge = isClosed
+    ? `<span class="badge">CLOSED</span>`
+    : `<span class="badge badge-good">OPEN</span>`;
+  div.innerHTML = `
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px">
+      <div>
+        <h2 style="margin-bottom:4px">${escapeHtml(idea.title)}</h2>
+        <p class="muted" style="font-size:0.8rem; margin:0 0 8px">by ${escapeHtml(idea.authorUsername || "Unknown")} &middot; ${fmtDate((idea.createdAt || "").split("T")[0])}</p>
+      </div>
+      ${statusBadge}
+    </div>
+    <p style="white-space:pre-wrap">${escapeHtml(idea.description)}</p>
+    <div style="margin:10px 0 4px">${tagsHtml}</div>
+    <button class="secondary venture-toggle-status" data-id="${idea.id}" data-status="${isClosed ? "open" : "closed"}">
+      ${isClosed ? "Reopen" : "Mark Closed"}
+    </button>
+  `;
+  return div;
+}
+
+function renderVentures(ideas) {
+  const list = document.getElementById("ventures-list");
+  const empty = document.getElementById("ventures-empty");
+  list.innerHTML = "";
+  if (!ideas.length) {
+    empty.style.display = "";
+    return;
+  }
+  empty.style.display = "none";
+  for (const idea of ideas) {
+    list.appendChild(ventureCard(idea));
+  }
+}
+
+async function loadVentures() {
+  try {
+    const res = await fetch("/api/business-ideas/list");
+    if (!res.ok) return;
+    const data = await res.json();
+    renderVentures(data.ideas || []);
+  } catch {
+    // Silent - Ventures tab just stays empty if this fails, same as the
+    // other read-only tabs on a transient error.
+  }
+}
+
+document.getElementById("venture-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const btn = e.target.querySelector("button[type=submit]");
+  const title = document.getElementById("venture-title").value.trim();
+  const description = document.getElementById("venture-description").value.trim();
+  const lookingFor = Array.from(document.querySelectorAll(".venture-tag:checked")).map((el) => el.value);
+  const errorEl = document.getElementById("venture-error");
+  errorEl.style.display = "none";
+
+  btn.disabled = true;
+  try {
+    const res = await fetch("/api/business-ideas/create", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title, description, lookingFor }),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      errorEl.textContent = body.error || "Something went wrong.";
+      errorEl.style.display = "";
+      btn.disabled = false;
+      return;
+    }
+    e.target.reset();
+    btn.disabled = false;
+    loadVentures();
+  } catch {
+    errorEl.textContent = "Couldn't reach the server. Try again shortly.";
+    errorEl.style.display = "";
+    btn.disabled = false;
+  }
+});
+
+document.getElementById("ventures-list").addEventListener("click", async (e) => {
+  const btn = e.target.closest(".venture-toggle-status");
+  if (!btn) return;
+  btn.disabled = true;
+  try {
+    const res = await fetch("/api/business-ideas/set-status", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: btn.dataset.id, status: btn.dataset.status }),
+    });
+    if (res.ok) {
+      loadVentures();
+    } else {
+      btn.disabled = false;
+    }
+  } catch {
+    btn.disabled = false;
+  }
+});
+
+loadVentures();
+
 // ---------- Tab switching ----------
 
 function switchTab(tab) {
