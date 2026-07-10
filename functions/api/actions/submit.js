@@ -9,10 +9,17 @@
 // regardless - this is purely an instant-feeling display convenience.
 
 import { verifySession } from "../../_lib/session.js";
-import { validateActionSubmission, enqueueAction, hasPendingAction } from "../../_lib/actions.js";
+import {
+  validateActionSubmission,
+  enqueueAction,
+  hasPendingAction,
+  secondsUntilWithdrawalAllowed,
+  recordWithdrawalTime,
+} from "../../_lib/actions.js";
 import { readSnapshot, applyOptimisticBalanceDelta } from "../../_lib/kv.js";
 
 const OPTIMISTIC_TYPES = new Set(["withdraw_deposit"]);
+const WITHDRAWAL_TYPES = new Set(["withdraw_deposit", "withdraw_savings"]);
 
 export async function onRequestPost({ request, env }) {
   const session = await verifySession(env.SESSION_SECRET, request.headers.get("Cookie"));
@@ -37,6 +44,16 @@ export async function onRequestPost({ request, env }) {
       { error: "You already have a request being processed - please wait for it to finish before submitting another." },
       { status: 429 }
     );
+  }
+
+  if (WITHDRAWAL_TYPES.has(body.type)) {
+    const cooldown = await secondsUntilWithdrawalAllowed(env.POYBANK_KV, session.discord_id);
+    if (cooldown > 0) {
+      return Response.json(
+        { error: `Please wait ${cooldown}s before submitting another withdrawal.` },
+        { status: 429 }
+      );
+    }
   }
 
   const isOptimistic = OPTIMISTIC_TYPES.has(body.type);
@@ -73,6 +90,10 @@ export async function onRequestPost({ request, env }) {
 
   if (isOptimistic) {
     await applyOptimisticBalanceDelta(env.POYBANK_KV, session.ign, { depositDelta: -amount });
+  }
+
+  if (WITHDRAWAL_TYPES.has(body.type)) {
+    await recordWithdrawalTime(env.POYBANK_KV, session.discord_id);
   }
 
   return Response.json({ ok: true, action: entry });

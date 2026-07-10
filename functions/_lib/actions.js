@@ -27,6 +27,28 @@ export async function hasPendingAction(kv, discordId) {
   return actions.some((a) => a.discord_id === discordId);
 }
 
+// Separate from hasPendingAction - that only blocks a second withdrawal
+// while the first is still queued/unprocessed. This blocks rapid-fire
+// withdrawals even once each one has already gone through, so a client
+// can submit at most one every 2 minutes no matter how fast the bot
+// processes them. Shared across withdraw_deposit and withdraw_savings
+// (one cooldown per client, not per account type).
+const WITHDRAWAL_COOLDOWN_SECONDS = 120;
+
+export async function secondsUntilWithdrawalAllowed(kv, discordId) {
+  const lastIso = await kv.get(`withdrawal_cooldown:${discordId}`);
+  if (!lastIso) return 0;
+  const elapsedMs = Date.now() - new Date(lastIso).getTime();
+  const remaining = WITHDRAWAL_COOLDOWN_SECONDS - Math.floor(elapsedMs / 1000);
+  return remaining > 0 ? remaining : 0;
+}
+
+export async function recordWithdrawalTime(kv, discordId) {
+  await kv.put(`withdrawal_cooldown:${discordId}`, new Date().toISOString(), {
+    expirationTtl: WITHDRAWAL_COOLDOWN_SECONDS,
+  });
+}
+
 async function writePendingActions(kv, actions) {
   await kv.put(KV_KEY, JSON.stringify(actions));
 }
