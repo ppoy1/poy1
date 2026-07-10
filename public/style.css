@@ -191,6 +191,13 @@ header.top h1 {
 /* ---------- Buttons ---------- */
 
 a.button, button, input[type="submit"] {
+  /* type="button" elements get native OS widget rendering in this browser
+     that otherwise silently overrides color/background/border - no CSS
+     specificity or !important fixes it, only this. Bit us three times
+     across .filter-btn, .icon-btn, and #pending-retry before landing it
+     here once so no future button on the site can hit it again. */
+  appearance: none;
+  -webkit-appearance: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;

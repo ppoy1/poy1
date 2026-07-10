@@ -130,11 +130,29 @@ async function pollStatus() {
       setTimeout(() => (window.location.href = "/portal.html"), 1200);
     } else if (data.status === "pending") {
       document.getElementById("pending-status").textContent = "Waiting for payment...";
+    } else if (statusPollTimer) {
+      // We were showing the pending screen and the claim is gone - it
+      // expired (claims only last 10 minutes, see bot.py's
+      // ACCOUNT_OPENING_CLAIM_TTL) rather than sitting around for days
+      // colliding with other people's verification amounts. Surface that
+      // instead of leaving "Waiting for payment..." up forever with no
+      // explanation.
+      clearInterval(statusPollTimer);
+      statusPollTimer = null;
+      document.getElementById("pending-status").textContent =
+        "This verification window expired before a payment arrived. Try again below.";
+      document.getElementById("pending-retry").style.display = "";
     }
   } catch {
     // Silent - just try again on the next interval tick.
   }
 }
+
+document.getElementById("pending-retry").addEventListener("click", () => {
+  document.getElementById("pending-retry").style.display = "none";
+  document.getElementById("pending-section").style.display = "none";
+  document.getElementById("signup-section").style.display = "";
+});
 
 // If they already have a pending claim from an earlier visit (e.g. they
 // closed the tab after submitting), pick up where they left off instead of
