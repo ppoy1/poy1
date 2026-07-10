@@ -308,16 +308,23 @@ function resizeImageFile(file, maxDim = 1280, quality = 0.82) {
   });
 }
 
+document.getElementById("venture-image-trigger").addEventListener("click", () => {
+  document.getElementById("venture-image").click();
+});
+
 document.getElementById("venture-image").addEventListener("change", async (e) => {
   const file = e.target.files[0];
   const errorEl = document.getElementById("venture-error");
   const preview = document.getElementById("venture-image-preview");
+  const filenameEl = document.getElementById("venture-image-filename");
   if (!file) {
     ventureImageDataUrl = null;
     preview.style.display = "none";
+    filenameEl.textContent = "No file chosen";
     return;
   }
   errorEl.style.display = "none";
+  filenameEl.textContent = file.name;
   try {
     ventureImageDataUrl = await resizeImageFile(file);
     preview.src = ventureImageDataUrl;
@@ -325,6 +332,7 @@ document.getElementById("venture-image").addEventListener("change", async (e) =>
   } catch {
     ventureImageDataUrl = null;
     preview.style.display = "none";
+    filenameEl.textContent = "No file chosen";
     errorEl.textContent = "Couldn't process that image. Try a different file.";
     errorEl.style.display = "";
   }
@@ -505,6 +513,7 @@ document.getElementById("venture-form").addEventListener("submit", async (e) => 
     e.target.reset();
     ventureImageDataUrl = null;
     document.getElementById("venture-image-preview").style.display = "none";
+    document.getElementById("venture-image-filename").textContent = "No file chosen";
     btn.disabled = false;
     loadVentures();
   } catch {

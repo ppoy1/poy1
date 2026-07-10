@@ -304,8 +304,15 @@
                 </label>
               </div>
               <div style="display:flex; flex-direction:column; gap:8px">
-                <label for="venture-image" style="font-size:0.85rem; color:var(--muted)">Picture (optional)</label>
-                <input type="file" id="venture-image" accept="image/png,image/jpeg,image/webp" />
+                <label class="muted" style="font-size:0.85rem">Picture (optional)</label>
+                <input type="file" id="venture-image" accept="image/png,image/jpeg,image/webp" style="display:none" />
+                <div style="display:flex; align-items:center; gap:12px">
+                  <button type="button" class="secondary" id="venture-image-trigger">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    Insert Image
+                  </button>
+                  <span class="muted" id="venture-image-filename" style="font-size:0.8rem">No file chosen</span>
+                </div>
                 <img id="venture-image-preview" style="display:none; max-width:220px; max-height:160px; object-fit:cover; border-radius:var(--radius-sm); border:1px solid var(--border-light)" />
               </div>
               <button type="submit" style="align-self:flex-start">Post Idea</button>
