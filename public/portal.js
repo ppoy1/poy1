@@ -107,6 +107,8 @@ function render(data) {
     ovBadge.style.display = "";
     savBadge.textContent = rateLabel;
     savBadge.style.display = "";
+    document.getElementById("ov-rate-disclaimer").style.display = "";
+    document.getElementById("sav-rate-disclaimer").style.display = "";
   }
 
   document.querySelectorAll(".sync-pill").forEach((el) => {
