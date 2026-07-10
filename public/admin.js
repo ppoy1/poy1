@@ -73,6 +73,7 @@ function render(data) {
 
   renderWithdrawals(data.pending_withdrawals || []);
   renderTransactions(data.recent_transactions || []);
+  renderMarket(data.chestshop_market);
 
   const loansBody = document.getElementById("loans-body");
   loansBody.innerHTML = "";
@@ -189,6 +190,60 @@ function renderTransactions(transactions) {
       <td>${txn.counterparty || ""}</td>
       <td><span class="txn-type ${isIn ? "deposit" : "withdrawal"}">${icon}${isIn ? "In" : "Out"}</span></td>
       <td>${isIn ? "+" : "-"}$${fmt(Math.abs(amount))}</td>
+    `;
+    body.appendChild(tr);
+  }
+}
+
+// ---------- Market (Beta) ----------
+
+function renderMarket(market) {
+  const volumeEl = document.getElementById("market-volume");
+  const salesEl = document.getElementById("market-sales");
+  const itemsEl = document.getElementById("market-items");
+  const shopsEl = document.getElementById("market-shops");
+  const body = document.getElementById("market-items-body");
+  const empty = document.getElementById("market-empty");
+  const table = body.closest("table");
+
+  const stats = market?.stats;
+  volumeEl.textContent = fmt(stats?.totalVolume);
+  salesEl.textContent = (stats?.totalSales ?? 0).toLocaleString();
+  itemsEl.textContent = (stats?.distinctItems ?? 0).toLocaleString();
+  shopsEl.textContent = (stats?.activeShops ?? 0).toLocaleString();
+
+  body.innerHTML = "";
+  const items = market?.items || [];
+  if (!items.length) {
+    empty.style.display = "";
+    table.style.display = "none";
+    return;
+  }
+  empty.style.display = "none";
+  table.style.display = "";
+
+  const sorted = items.slice().sort((a, b) => Number(b.totalVolume || 0) - Number(a.totalVolume || 0));
+  for (const item of sorted) {
+    const days = (item.priceByDay || []).slice().sort((a, b) => (a.day || "").localeCompare(b.day || ""));
+    const priced = days.filter((d) => Number(d.avgUnitPrice) > 0);
+    let trendHtml = '<span class="muted">—</span>';
+    if (priced.length >= 2) {
+      const first = Number(priced[0].avgUnitPrice);
+      const last = Number(priced[priced.length - 1].avgUnitPrice);
+      if (first > 0) {
+        const pct = ((last - first) / first) * 100;
+        const up = pct >= 0;
+        trendHtml = `<span style="color:${up ? "var(--good)" : "var(--bad)"}">${up ? "▲" : "▼"} ${Math.abs(pct).toFixed(1)}%</span>`;
+      }
+    }
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${item.itemName || item.itemKey || ""}</td>
+      <td>$${fmt(item.avgUnitPrice)}</td>
+      <td>${(item.tradeCount || 0).toLocaleString()}</td>
+      <td>$${fmt(item.totalVolume)}</td>
+      <td>${(item.activeShopCount || 0).toLocaleString()}</td>
+      <td>${trendHtml}</td>
     `;
     body.appendChild(tr);
   }

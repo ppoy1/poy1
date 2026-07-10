@@ -53,6 +53,14 @@
         </div>
 
         <div class="nav-category">
+          <div class="nav-category-label">Beta - Owner Only</div>
+          <button class="nav-link" data-tab="market">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.1-2.8-2.8L7 14"/></svg>
+            Market
+          </button>
+        </div>
+
+        <div class="nav-category">
           <div class="nav-category-label">Account</div>
           <a class="nav-link" href="/portal.html">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
@@ -215,6 +223,51 @@
               </table>
             </div>
             <p class="field-hint" id="transactions-empty" style="display:none">No transactions logged yet.</p>
+          </div>
+        </section>
+
+        <!-- Market (Beta) -->
+        <section class="tab-panel" data-panel="market">
+          <div class="content-header">
+            <div>
+              <h1>Market <span class="badge badge-warn">BETA</span></h1>
+              <p class="muted">Server-wide ChestShop prices and trade activity, from DemocracyCraft's public economy API - owner only for now.</p>
+            </div>
+            <span class="sync-pill" id="synced-at-6"></span>
+          </div>
+
+          <div class="balance-grid">
+            <div class="stat-card">
+              <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.1-2.8-2.8L7 14"/></svg></div>
+              <h2>Volume (30d)</h2>
+              <div class="balance-amount">$<span id="market-volume">0</span></div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M15 3h4a2 2 0 0 1 2 2v4"/><path d="M9 21l12-12"/></svg></div>
+              <h2>Sales (30d)</h2>
+              <div class="balance-amount"><span id="market-sales">0</span></div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg></div>
+              <h2>Distinct Items</h2>
+              <div class="balance-amount"><span id="market-items">0</span></div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
+              <h2>Active Shops</h2>
+              <div class="balance-amount"><span id="market-shops">0</span></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Traded Items <span class="muted" style="font-weight:400; font-size:0.8rem">last 30 days</span></h2>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Item</th><th>Avg Price</th><th>Trades</th><th>Volume</th><th>Active Shops</th><th>Trend</th></tr></thead>
+                <tbody id="market-items-body"></tbody>
+              </table>
+            </div>
+            <p class="field-hint" id="market-empty" style="display:none">No market data synced yet - check back after the next sync cycle.</p>
           </div>
         </section>
 
