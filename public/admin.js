@@ -304,6 +304,9 @@ function ventureCard(idea) {
     <button class="secondary venture-toggle-status" data-id="${idea.id}" data-status="${isClosed ? "open" : "closed"}">
       ${isClosed ? "Reopen" : "Mark Closed"}
     </button>
+    <button class="secondary venture-delete" data-id="${idea.id}" style="color:var(--bad); border-color:var(--bad)">
+      Delete
+    </button>
 
     <div class="card" style="background:var(--panel-2); margin-top:14px">
       <h2 style="font-size:0.85rem">Discussion</h2>
@@ -407,6 +410,28 @@ document.getElementById("ventures-list").addEventListener("click", async (e) => 
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id: btn.dataset.id, status: btn.dataset.status }),
+    });
+    if (res.ok) {
+      loadVentures();
+    } else {
+      btn.disabled = false;
+    }
+  } catch {
+    btn.disabled = false;
+  }
+});
+
+document.getElementById("ventures-list").addEventListener("click", async (e) => {
+  const btn = e.target.closest(".venture-delete");
+  if (!btn) return;
+  if (!confirm("Delete this idea permanently? This can't be undone.")) return;
+
+  btn.disabled = true;
+  try {
+    const res = await fetch("/api/business-ideas/delete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: btn.dataset.id }),
     });
     if (res.ok) {
       loadVentures();

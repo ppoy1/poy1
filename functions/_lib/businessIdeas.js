@@ -64,3 +64,15 @@ export async function setBusinessIdeaStatus(kv, id, status, requesterDiscordId) 
   await writeBusinessIdeas(kv, ideas);
   return { idea };
 }
+
+// No author check here, unlike setBusinessIdeaStatus above - this is an
+// owner moderation tool (the caller only needs to be authenticated as
+// admin, checked in the endpoint), meant to remove any post regardless
+// of who posted it, not just the requester's own.
+export async function deleteBusinessIdea(kv, id) {
+  const ideas = await readBusinessIdeas(kv);
+  const filtered = ideas.filter((i) => i.id !== id);
+  if (filtered.length === ideas.length) return { error: "not_found" };
+  await writeBusinessIdeas(kv, filtered);
+  return { ok: true };
+}
