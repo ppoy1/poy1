@@ -1200,55 +1200,6 @@ td.muted-cell {
   border-color: rgba(76, 201, 255, 0.25);
 }
 
-/* ---------- Modal (thread view) ---------- */
-
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(4, 6, 12, 0.7);
-  backdrop-filter: blur(3px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 24px;
-}
-
-.modal-panel {
-  background: var(--panel-solid);
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius);
-  max-width: 640px;
-  width: 100%;
-  max-height: 85vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
-}
-
-.modal-header {
-  padding: 20px 24px;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
-  flex-shrink: 0;
-}
-
-.modal-body {
-  padding: 20px 24px;
-  overflow-y: auto;
-  flex: 1;
-}
-
-.modal-footer {
-  padding: 16px 24px;
-  border-top: 1px solid var(--border);
-  flex-shrink: 0;
-}
-
 /* Fundraiser-card-style grid, per the gnomefundme.org reference the owner
    pointed to - a big image up top per post, not a small inline thumbnail. */
 #ventures-list {
@@ -1266,6 +1217,7 @@ td.muted-cell {
   transition: border-color 0.15s ease, transform 0.15s ease;
   display: flex;
   flex-direction: column;
+  text-decoration: none;
 }
 
 .venture-preview:hover {

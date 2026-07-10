@@ -34,7 +34,6 @@ function clientRow(ign, client) {
 }
 
 function render(data) {
-  isOwner = !!data.is_owner;
   document.getElementById("sidebar-username").textContent = data.admin_username || "Owner";
   const avatarEl = document.getElementById("sidebar-avatar");
   if (data.admin_avatar_url) {
@@ -260,19 +259,12 @@ function escapeHtml(str) {
 
 const VENTURE_TAG_LABELS = { partners: "Partners", investment: "Investment", advice: "Advice / Information" };
 
-// Cache of the last-fetched list, so search/filtering/the modal can all
-// work without a round-trip - the beta only has one user (the owner)
-// posting to a small KV blob, so there's no pagination/dataset-size
-// concern yet.
+// Cache of the last-fetched list, so search/filtering can work without a
+// round-trip - the beta only has one user (the owner) posting to a small
+// KV blob, so there's no pagination/dataset-size concern yet.
 let allVentures = [];
-let currentVentureId = null;
 let ventureImageDataUrl = null;
 const ventureFilters = { status: "all", tag: null, query: "" };
-// Set from /api/admin/data's is_owner flag (see render()) - today every
-// admin session already IS the owner, but the Delete button is gated on
-// this explicitly rather than "the whole page is admin-only" so it stays
-// correct if that ever changes.
-let isOwner = false;
 
 // Normalizes any uploaded photo to a bounded JPEG before it goes anywhere
 // near the network - there's no object storage (R2) wired up yet, so
@@ -348,22 +340,6 @@ function ventureByline(entry) {
     : discord;
 }
 
-function ventureCommentsHtml(comments) {
-  if (!comments || !comments.length) {
-    return `<p class="muted" style="font-size:0.85rem">No messages yet - be the first to reach out.</p>`;
-  }
-  return comments
-    .map(
-      (c) => `
-        <div style="padding:8px 0; border-bottom:1px solid var(--border)">
-          <p class="muted" style="font-size:0.75rem; margin:0 0 2px">${ventureByline(c)} &middot; ${fmtDate((c.createdAt || "").split("T")[0])}</p>
-          <p style="margin:0; white-space:pre-wrap">${escapeHtml(c.text)}</p>
-        </div>
-      `
-    )
-    .join("");
-}
-
 function ventureTagsHtml(idea) {
   return (idea.lookingFor || [])
     .map((t) => `<span class="badge">${escapeHtml(VENTURE_TAG_LABELS[t] || t)}</span>`)
@@ -378,12 +354,13 @@ const VENTURE_PLACEHOLDER_ICON = `
 
 // Fundraiser-card-style preview, per the gnomefundme.org layout the owner
 // referenced: a big image (or a placeholder if none was uploaded) up top
-// with status/tag badges overlaid, then title/byline/snippet below. Click
-// to open opens the thread modal - no inline actions or discussion here.
+// with status/tag badges overlaid, then title/byline/snippet below. A
+// real link to venture.html?id=... (its own page, not a popup) - no
+// inline actions or discussion here.
 function venturePreview(idea) {
-  const div = document.createElement("div");
-  div.className = "venture-preview";
-  div.dataset.id = idea.id;
+  const link = document.createElement("a");
+  link.className = "venture-preview";
+  link.href = `venture.html?id=${encodeURIComponent(idea.id)}`;
   const isClosed = idea.status === "closed";
   const statusBadge = isClosed
     ? `<span class="badge">CLOSED</span>`
@@ -393,7 +370,7 @@ function venturePreview(idea) {
   const mediaHtml = idea.image
     ? `<img src="${idea.image}" alt="" />`
     : `<div class="venture-tile-media-placeholder">${VENTURE_PLACEHOLDER_ICON}</div>`;
-  div.innerHTML = `
+  link.innerHTML = `
     <div class="venture-tile-media">
       ${mediaHtml}
       <div class="venture-tile-badges">${statusBadge}</div>
@@ -408,7 +385,7 @@ function venturePreview(idea) {
       </div>
     </div>
   `;
-  return div;
+  return link;
 }
 
 function renderVentures(ideas) {
@@ -453,7 +430,6 @@ async function loadVentures() {
     const data = await res.json();
     allVentures = data.ideas || [];
     applyVentureFilters();
-    if (currentVentureId) renderVentureModal();
   } catch {
     // Silent - Ventures tab just stays empty if this fails, same as the
     // other read-only tabs on a transient error.
@@ -523,136 +499,6 @@ document.getElementById("venture-form").addEventListener("submit", async (e) => 
   }
 });
 
-// ---------- Ventures thread modal (Discord-thread-style click-to-open) ----------
-
-const ventureModal = document.getElementById("venture-modal");
-
-function renderVentureModal() {
-  const idea = allVentures.find((i) => i.id === currentVentureId);
-  if (!idea) {
-    closeVentureModal();
-    return;
-  }
-  const isClosed = idea.status === "closed";
-  document.getElementById("venture-modal-title").textContent = idea.title;
-  document.getElementById("venture-modal-meta").innerHTML =
-    `by ${ventureByline(idea)} &middot; ${fmtDate((idea.createdAt || "").split("T")[0])} &middot; ${isClosed ? "Closed" : "Open"}`;
-
-  const thumbHtml = idea.image ? `<img class="venture-thumb" src="${idea.image}" alt="" />` : "";
-  // Delete is an owner-only moderation tool, not tied to who posted it -
-  // only ever rendered when the logged-in session is actually the owner
-  // (isOwner, set from /api/admin/data's is_owner flag in render()).
-  const deleteBtnHtml = isOwner
-    ? `<button class="secondary venture-delete" data-id="${idea.id}" style="color:var(--bad); border-color:var(--bad)">Delete</button>`
-    : "";
-  document.getElementById("venture-modal-body").innerHTML = `
-    <div>${ventureTagsHtml(idea)}</div>
-    ${thumbHtml}
-    <p style="white-space:pre-wrap">${escapeHtml(idea.description)}</p>
-    <div style="display:flex; gap:8px; margin:14px 0">
-      <button class="secondary venture-toggle-status" data-id="${idea.id}" data-status="${isClosed ? "open" : "closed"}">
-        ${isClosed ? "Reopen" : "Mark Closed"}
-      </button>
-      ${deleteBtnHtml}
-    </div>
-    <h2 style="font-size:0.85rem; margin-top:18px">Thread</h2>
-    <div class="venture-comments">${ventureCommentsHtml(idea.comments)}</div>
-  `;
-}
-
-function openVentureModal(id) {
-  currentVentureId = id;
-  renderVentureModal();
-  ventureModal.style.display = "flex";
-}
-
-function closeVentureModal() {
-  currentVentureId = null;
-  ventureModal.style.display = "none";
-}
-
-document.getElementById("ventures-list").addEventListener("click", (e) => {
-  const card = e.target.closest(".venture-preview");
-  if (!card) return;
-  openVentureModal(card.dataset.id);
-});
-
-document.getElementById("venture-modal-close").addEventListener("click", closeVentureModal);
-ventureModal.addEventListener("click", (e) => {
-  if (e.target === ventureModal) closeVentureModal();
-});
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && ventureModal.style.display !== "none") closeVentureModal();
-});
-
-document.getElementById("venture-modal-body").addEventListener("click", async (e) => {
-  const toggleBtn = e.target.closest(".venture-toggle-status");
-  if (toggleBtn) {
-    toggleBtn.disabled = true;
-    try {
-      const res = await fetch("/api/business-ideas/set-status", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: toggleBtn.dataset.id, status: toggleBtn.dataset.status }),
-      });
-      if (res.ok) {
-        await loadVentures();
-      } else {
-        toggleBtn.disabled = false;
-      }
-    } catch {
-      toggleBtn.disabled = false;
-    }
-    return;
-  }
-
-  const deleteBtn = e.target.closest(".venture-delete");
-  if (deleteBtn) {
-    if (!confirm("Delete this idea permanently? This can't be undone.")) return;
-    deleteBtn.disabled = true;
-    try {
-      const res = await fetch("/api/business-ideas/delete", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: deleteBtn.dataset.id }),
-      });
-      if (res.ok) {
-        closeVentureModal();
-        await loadVentures();
-      } else {
-        deleteBtn.disabled = false;
-      }
-    } catch {
-      deleteBtn.disabled = false;
-    }
-  }
-});
-
-document.getElementById("venture-modal-comment-form").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const input = document.getElementById("venture-modal-comment-input");
-  const btn = e.target.querySelector("button[type=submit]");
-  const text = input.value.trim();
-  if (!text || !currentVentureId) return;
-
-  btn.disabled = true;
-  input.disabled = true;
-  try {
-    const res = await fetch("/api/business-ideas/comment", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ideaId: currentVentureId, text }),
-    });
-    if (res.ok) {
-      input.value = "";
-      await loadVentures();
-    }
-  } finally {
-    btn.disabled = false;
-    input.disabled = false;
-  }
-});
-
 loadVentures();
 
 // ---------- Tab switching ----------
@@ -666,6 +512,14 @@ function switchTab(tab) {
 document.querySelectorAll(".nav-link").forEach((el) => {
   el.addEventListener("click", () => switchTab(el.dataset.tab));
 });
+
+// Lets other pages (like venture.html's "Back to Ventures" link) deep-link
+// straight to a specific tab via admin.html#ventures instead of always
+// landing on Overview.
+const initialTab = window.location.hash.replace("#", "");
+if (initialTab && document.querySelector(`.nav-link[data-tab="${initialTab}"]`)) {
+  switchTab(initialTab);
+}
 
 // ---------- Mobile sidebar ----------
 
