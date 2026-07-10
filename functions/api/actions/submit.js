@@ -9,7 +9,7 @@
 // regardless - this is purely an instant-feeling display convenience.
 
 import { verifySession } from "../../_lib/session.js";
-import { validateActionSubmission, enqueueAction } from "../../_lib/actions.js";
+import { validateActionSubmission, enqueueAction, hasPendingAction } from "../../_lib/actions.js";
 import { readSnapshot, applyOptimisticBalanceDelta } from "../../_lib/kv.js";
 
 const OPTIMISTIC_TYPES = new Set(["withdraw_deposit"]);
@@ -30,6 +30,13 @@ export async function onRequestPost({ request, env }) {
   const validationError = validateActionSubmission(body);
   if (validationError) {
     return Response.json({ error: validationError }, { status: 400 });
+  }
+
+  if (await hasPendingAction(env.POYBANK_KV, session.discord_id)) {
+    return Response.json(
+      { error: "You already have a request being processed - please wait for it to finish before submitting another." },
+      { status: 429 }
+    );
   }
 
   const isOptimistic = OPTIMISTIC_TYPES.has(body.type);

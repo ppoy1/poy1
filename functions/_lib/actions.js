@@ -18,6 +18,15 @@ export async function readPendingActions(kv) {
   return raw ? JSON.parse(raw) : [];
 }
 
+// One in-flight request per client at a time - stops someone from
+// stacking up multiple withdrawals/claims (by mashing the button or
+// calling the API directly, bypassing the frontend's own disable-while-
+// submitting guard) before the bot has processed the first one.
+export async function hasPendingAction(kv, discordId) {
+  const actions = await readPendingActions(kv);
+  return actions.some((a) => a.discord_id === discordId);
+}
+
 async function writePendingActions(kv, actions) {
   await kv.put(KV_KEY, JSON.stringify(actions));
 }
