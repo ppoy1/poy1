@@ -239,6 +239,20 @@ a.button.secondary:hover, button.secondary:hover {
   box-shadow: 0 0 16px -4px rgba(76, 201, 255, 0.4);
 }
 
+/* Compact file-picker trigger button - without an explicit size the SVG
+   icon renders at the browser's oversized SVG default, blowing the whole
+   button up into a big square instead of a small rectangle. */
+#venture-image-trigger {
+  padding: 8px 14px;
+  font-size: 0.82rem;
+}
+
+#venture-image-trigger svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
 button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
