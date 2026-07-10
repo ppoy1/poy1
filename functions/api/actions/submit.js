@@ -12,7 +12,7 @@ import { verifySession } from "../../_lib/session.js";
 import { validateActionSubmission, enqueueAction } from "../../_lib/actions.js";
 import { readSnapshot, applyOptimisticBalanceDelta } from "../../_lib/kv.js";
 
-const OPTIMISTIC_TYPES = new Set(["withdraw_deposit", "transfer_deposit_to_savings", "transfer_deposit_to_loan"]);
+const OPTIMISTIC_TYPES = new Set(["withdraw_deposit"]);
 
 export async function onRequestPost({ request, env }) {
   const session = await verifySession(env.SESSION_SECRET, request.headers.get("Cookie"));
@@ -65,11 +65,7 @@ export async function onRequestPost({ request, env }) {
   });
 
   if (isOptimistic) {
-    if (body.type === "transfer_deposit_to_savings") {
-      await applyOptimisticBalanceDelta(env.POYBANK_KV, session.ign, { depositDelta: -amount, savingsDelta: amount });
-    } else {
-      await applyOptimisticBalanceDelta(env.POYBANK_KV, session.ign, { depositDelta: -amount });
-    }
+    await applyOptimisticBalanceDelta(env.POYBANK_KV, session.ign, { depositDelta: -amount });
   }
 
   return Response.json({ ok: true, action: entry });

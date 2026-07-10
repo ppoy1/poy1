@@ -9,11 +9,9 @@ const VALID_TYPES = [
   "withdraw_deposit",
   "withdraw_savings",
   "claim_deposit",
-  "transfer_deposit_to_savings",
-  "transfer_deposit_to_loan",
 ];
 const VALID_CLAIM_ACCOUNT_TYPES = ["Deposit", "Savings", "Loan"];
-const AMOUNT_REQUIRED_TYPES = ["withdraw_deposit", "withdraw_savings", "transfer_deposit_to_savings", "transfer_deposit_to_loan"];
+const AMOUNT_REQUIRED_TYPES = ["withdraw_deposit", "withdraw_savings"];
 
 export async function readPendingActions(kv) {
   const raw = await kv.get(KV_KEY);

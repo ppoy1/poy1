@@ -224,13 +224,6 @@ document.getElementById("claim-form").addEventListener("submit", async (e) => {
   await submitAction({ type: "claim_deposit", account_type }, e.target);
 });
 
-document.getElementById("transfer-form").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const amount = document.getElementById("transfer-amount").value;
-  const type = document.getElementById("transfer-destination").value;
-  await submitAction({ type, amount }, e.target);
-});
-
 // ---------- Tab switching ----------
 
 function switchTab(tab) {
