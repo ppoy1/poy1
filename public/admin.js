@@ -259,10 +259,70 @@ function escapeHtml(str) {
 
 const VENTURE_TAG_LABELS = { partners: "Partners", investment: "Investment", advice: "Advice / Information" };
 
-// Cache of the last-fetched list, so the search box can filter without a
-// round-trip - the beta only has one user (the owner) posting to a small
-// KV blob, so there's no pagination/dataset-size concern yet.
+// Cache of the last-fetched list, so search/filtering/the modal can all
+// work without a round-trip - the beta only has one user (the owner)
+// posting to a small KV blob, so there's no pagination/dataset-size
+// concern yet.
 let allVentures = [];
+let currentVentureId = null;
+let ventureImageDataUrl = null;
+const ventureFilters = { status: "all", tag: null, query: "" };
+
+// Normalizes any uploaded photo to a bounded JPEG before it goes anywhere
+// near the network - there's no object storage (R2) wired up yet, so
+// images live as data URLs inside the same KV blob as the posts, and this
+// keeps that blob from growing unbounded off a raw phone photo.
+function resizeImageFile(file, maxDim = 1280, quality = 0.82) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      img.onerror = () => reject(new Error("Couldn't read that image."));
+      img.src = reader.result;
+    };
+    reader.onerror = () => reject(new Error("Couldn't read that image."));
+    reader.readAsDataURL(file);
+  });
+}
+
+document.getElementById("venture-image").addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  const errorEl = document.getElementById("venture-error");
+  const preview = document.getElementById("venture-image-preview");
+  if (!file) {
+    ventureImageDataUrl = null;
+    preview.style.display = "none";
+    return;
+  }
+  errorEl.style.display = "none";
+  try {
+    ventureImageDataUrl = await resizeImageFile(file);
+    preview.src = ventureImageDataUrl;
+    preview.style.display = "";
+  } catch {
+    ventureImageDataUrl = null;
+    preview.style.display = "none";
+    errorEl.textContent = "Couldn't process that image. Try a different file.";
+    errorEl.style.display = "";
+  }
+});
 
 function ventureCommentsHtml(comments) {
   if (!comments || !comments.length) {
@@ -280,41 +340,41 @@ function ventureCommentsHtml(comments) {
     .join("");
 }
 
-function ventureCard(idea) {
-  const div = document.createElement("div");
-  div.className = "card";
-  div.style.marginBottom = "12px";
-  const tagsHtml = (idea.lookingFor || [])
+function ventureTagsHtml(idea) {
+  return (idea.lookingFor || [])
     .map((t) => `<span class="badge">${escapeHtml(VENTURE_TAG_LABELS[t] || t)}</span>`)
     .join(" ");
+}
+
+// Compact, click-to-open preview - no inline actions or discussion here on
+// purpose, both now live in the thread modal (see openVentureModal below).
+function venturePreview(idea) {
+  const div = document.createElement("div");
+  div.className = "card venture-preview";
+  div.style.marginBottom = "12px";
+  div.dataset.id = idea.id;
   const isClosed = idea.status === "closed";
   const statusBadge = isClosed
     ? `<span class="badge">CLOSED</span>`
     : `<span class="badge badge-good">OPEN</span>`;
+  const commentCount = (idea.comments || []).length;
+  const snippet = idea.description.length > 140 ? idea.description.slice(0, 140) + "..." : idea.description;
+  const thumbHtml = idea.image
+    ? `<img class="venture-thumb" src="${idea.image}" style="max-height:140px; margin:8px 0" alt="" />`
+    : "";
   div.innerHTML = `
     <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px">
-      <div>
+      <div style="min-width:0">
         <h2 style="margin-bottom:4px">${escapeHtml(idea.title)}</h2>
-        <p class="muted" style="font-size:0.8rem; margin:0 0 8px">by ${escapeHtml(idea.authorUsername || "Unknown")} &middot; ${fmtDate((idea.createdAt || "").split("T")[0])}</p>
+        <p class="muted" style="font-size:0.8rem; margin:0">by ${escapeHtml(idea.authorUsername || "Unknown")} &middot; ${fmtDate((idea.createdAt || "").split("T")[0])}</p>
       </div>
       ${statusBadge}
     </div>
-    <p style="white-space:pre-wrap">${escapeHtml(idea.description)}</p>
-    <div style="margin:10px 0 4px">${tagsHtml}</div>
-    <button class="secondary venture-toggle-status" data-id="${idea.id}" data-status="${isClosed ? "open" : "closed"}">
-      ${isClosed ? "Reopen" : "Mark Closed"}
-    </button>
-    <button class="secondary venture-delete" data-id="${idea.id}" style="color:var(--bad); border-color:var(--bad)">
-      Delete
-    </button>
-
-    <div class="card" style="background:var(--panel-2); margin-top:14px">
-      <h2 style="font-size:0.85rem">Discussion</h2>
-      <div class="venture-comments">${ventureCommentsHtml(idea.comments)}</div>
-      <form class="venture-comment-form withdraw-form" data-idea-id="${idea.id}" style="margin-top:10px">
-        <input type="text" class="venture-comment-input" placeholder="Write a message..." maxlength="1000" required />
-        <button type="submit" class="secondary">Send</button>
-      </form>
+    ${thumbHtml}
+    <p class="muted" style="white-space:pre-wrap; margin:8px 0">${escapeHtml(snippet)}</p>
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:8px">
+      <div>${ventureTagsHtml(idea)}</div>
+      <span class="muted" style="font-size:0.78rem; white-space:nowrap">&#128172; ${commentCount}</span>
     </div>
   `;
   return div;
@@ -337,16 +397,22 @@ function renderVentures(ideas) {
     return;
   }
   for (const idea of ideas) {
-    list.appendChild(ventureCard(idea));
+    list.appendChild(venturePreview(idea));
   }
 }
 
-function filterVentures(query) {
-  const q = query.trim().toLowerCase();
-  if (!q) return allVentures;
-  return allVentures.filter(
-    (idea) => idea.title.toLowerCase().includes(q) || idea.description.toLowerCase().includes(q)
-  );
+function filterVentures() {
+  const q = ventureFilters.query.trim().toLowerCase();
+  return allVentures.filter((idea) => {
+    if (ventureFilters.status !== "all" && idea.status !== ventureFilters.status) return false;
+    if (ventureFilters.tag && !(idea.lookingFor || []).includes(ventureFilters.tag)) return false;
+    if (q && !idea.title.toLowerCase().includes(q) && !idea.description.toLowerCase().includes(q)) return false;
+    return true;
+  });
+}
+
+function applyVentureFilters() {
+  renderVentures(filterVentures());
 }
 
 async function loadVentures() {
@@ -355,8 +421,8 @@ async function loadVentures() {
     if (!res.ok) return;
     const data = await res.json();
     allVentures = data.ideas || [];
-    const query = document.getElementById("venture-search").value;
-    renderVentures(filterVentures(query));
+    applyVentureFilters();
+    if (currentVentureId) renderVentureModal();
   } catch {
     // Silent - Ventures tab just stays empty if this fails, same as the
     // other read-only tabs on a transient error.
@@ -365,7 +431,29 @@ async function loadVentures() {
 
 document.getElementById("venture-search-form").addEventListener("submit", (e) => {
   e.preventDefault();
-  renderVentures(filterVentures(document.getElementById("venture-search").value));
+  ventureFilters.query = document.getElementById("venture-search").value;
+  applyVentureFilters();
+});
+
+document.querySelectorAll(".filter-btn[data-filter-status]").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    ventureFilters.status = btn.dataset.filterStatus;
+    document
+      .querySelectorAll(".filter-btn[data-filter-status]")
+      .forEach((b) => b.classList.toggle("active", b === btn));
+    applyVentureFilters();
+  });
+});
+
+document.querySelectorAll(".filter-btn[data-filter-tag]").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const tag = btn.dataset.filterTag;
+    ventureFilters.tag = ventureFilters.tag === tag ? null : tag;
+    document
+      .querySelectorAll(".filter-btn[data-filter-tag]")
+      .forEach((b) => b.classList.toggle("active", b.dataset.filterTag === ventureFilters.tag));
+    applyVentureFilters();
+  });
 });
 
 document.getElementById("venture-form").addEventListener("submit", async (e) => {
@@ -382,7 +470,7 @@ document.getElementById("venture-form").addEventListener("submit", async (e) => 
     const res = await fetch("/api/business-ideas/create", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, description, lookingFor }),
+      body: JSON.stringify({ title, description, lookingFor, image: ventureImageDataUrl }),
     });
     const body = await res.json().catch(() => ({}));
     if (!res.ok) {
@@ -392,6 +480,8 @@ document.getElementById("venture-form").addEventListener("submit", async (e) => 
       return;
     }
     e.target.reset();
+    ventureImageDataUrl = null;
+    document.getElementById("venture-image-preview").style.display = "none";
     btn.disabled = false;
     loadVentures();
   } catch {
@@ -401,56 +491,113 @@ document.getElementById("venture-form").addEventListener("submit", async (e) => 
   }
 });
 
-document.getElementById("ventures-list").addEventListener("click", async (e) => {
-  const btn = e.target.closest(".venture-toggle-status");
-  if (!btn) return;
-  btn.disabled = true;
-  try {
-    const res = await fetch("/api/business-ideas/set-status", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: btn.dataset.id, status: btn.dataset.status }),
-    });
-    if (res.ok) {
-      loadVentures();
-    } else {
-      btn.disabled = false;
+// ---------- Ventures thread modal (Discord-thread-style click-to-open) ----------
+
+const ventureModal = document.getElementById("venture-modal");
+
+function renderVentureModal() {
+  const idea = allVentures.find((i) => i.id === currentVentureId);
+  if (!idea) {
+    closeVentureModal();
+    return;
+  }
+  const isClosed = idea.status === "closed";
+  document.getElementById("venture-modal-title").textContent = idea.title;
+  document.getElementById("venture-modal-meta").textContent =
+    `by ${idea.authorUsername || "Unknown"} · ${fmtDate((idea.createdAt || "").split("T")[0])} · ${isClosed ? "Closed" : "Open"}`;
+
+  const thumbHtml = idea.image ? `<img class="venture-thumb" src="${idea.image}" alt="" />` : "";
+  document.getElementById("venture-modal-body").innerHTML = `
+    <div>${ventureTagsHtml(idea)}</div>
+    ${thumbHtml}
+    <p style="white-space:pre-wrap">${escapeHtml(idea.description)}</p>
+    <div style="display:flex; gap:8px; margin:14px 0">
+      <button class="secondary venture-toggle-status" data-id="${idea.id}" data-status="${isClosed ? "open" : "closed"}">
+        ${isClosed ? "Reopen" : "Mark Closed"}
+      </button>
+      <button class="secondary venture-delete" data-id="${idea.id}" style="color:var(--bad); border-color:var(--bad)">
+        Delete
+      </button>
+    </div>
+    <h2 style="font-size:0.85rem; margin-top:18px">Thread</h2>
+    <div class="venture-comments">${ventureCommentsHtml(idea.comments)}</div>
+  `;
+}
+
+function openVentureModal(id) {
+  currentVentureId = id;
+  renderVentureModal();
+  ventureModal.style.display = "flex";
+}
+
+function closeVentureModal() {
+  currentVentureId = null;
+  ventureModal.style.display = "none";
+}
+
+document.getElementById("ventures-list").addEventListener("click", (e) => {
+  const card = e.target.closest(".venture-preview");
+  if (!card) return;
+  openVentureModal(card.dataset.id);
+});
+
+document.getElementById("venture-modal-close").addEventListener("click", closeVentureModal);
+ventureModal.addEventListener("click", (e) => {
+  if (e.target === ventureModal) closeVentureModal();
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && ventureModal.style.display !== "none") closeVentureModal();
+});
+
+document.getElementById("venture-modal-body").addEventListener("click", async (e) => {
+  const toggleBtn = e.target.closest(".venture-toggle-status");
+  if (toggleBtn) {
+    toggleBtn.disabled = true;
+    try {
+      const res = await fetch("/api/business-ideas/set-status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: toggleBtn.dataset.id, status: toggleBtn.dataset.status }),
+      });
+      if (res.ok) {
+        await loadVentures();
+      } else {
+        toggleBtn.disabled = false;
+      }
+    } catch {
+      toggleBtn.disabled = false;
     }
-  } catch {
-    btn.disabled = false;
+    return;
+  }
+
+  const deleteBtn = e.target.closest(".venture-delete");
+  if (deleteBtn) {
+    if (!confirm("Delete this idea permanently? This can't be undone.")) return;
+    deleteBtn.disabled = true;
+    try {
+      const res = await fetch("/api/business-ideas/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: deleteBtn.dataset.id }),
+      });
+      if (res.ok) {
+        closeVentureModal();
+        await loadVentures();
+      } else {
+        deleteBtn.disabled = false;
+      }
+    } catch {
+      deleteBtn.disabled = false;
+    }
   }
 });
 
-document.getElementById("ventures-list").addEventListener("click", async (e) => {
-  const btn = e.target.closest(".venture-delete");
-  if (!btn) return;
-  if (!confirm("Delete this idea permanently? This can't be undone.")) return;
-
-  btn.disabled = true;
-  try {
-    const res = await fetch("/api/business-ideas/delete", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: btn.dataset.id }),
-    });
-    if (res.ok) {
-      loadVentures();
-    } else {
-      btn.disabled = false;
-    }
-  } catch {
-    btn.disabled = false;
-  }
-});
-
-document.getElementById("ventures-list").addEventListener("submit", async (e) => {
-  const form = e.target.closest(".venture-comment-form");
-  if (!form) return;
+document.getElementById("venture-modal-comment-form").addEventListener("submit", async (e) => {
   e.preventDefault();
-  const input = form.querySelector(".venture-comment-input");
-  const btn = form.querySelector("button[type=submit]");
+  const input = document.getElementById("venture-modal-comment-input");
+  const btn = e.target.querySelector("button[type=submit]");
   const text = input.value.trim();
-  if (!text) return;
+  if (!text || !currentVentureId) return;
 
   btn.disabled = true;
   input.disabled = true;
@@ -458,15 +605,13 @@ document.getElementById("ventures-list").addEventListener("submit", async (e) =>
     const res = await fetch("/api/business-ideas/comment", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ideaId: form.dataset.ideaId, text }),
+      body: JSON.stringify({ ideaId: currentVentureId, text }),
     });
     if (res.ok) {
-      loadVentures();
-    } else {
-      btn.disabled = false;
-      input.disabled = false;
+      input.value = "";
+      await loadVentures();
     }
-  } catch {
+  } finally {
     btn.disabled = false;
     input.disabled = false;
   }

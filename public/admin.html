@@ -303,6 +303,11 @@
                   <input type="checkbox" value="advice" class="venture-tag" /> Advice / Information
                 </label>
               </div>
+              <div style="display:flex; flex-direction:column; gap:8px">
+                <label for="venture-image" style="font-size:0.85rem; color:var(--muted)">Picture (optional)</label>
+                <input type="file" id="venture-image" accept="image/png,image/jpeg,image/webp" />
+                <img id="venture-image-preview" style="display:none; max-width:220px; max-height:160px; object-fit:cover; border-radius:var(--radius-sm); border:1px solid var(--border-light)" />
+              </div>
               <button type="submit" style="align-self:flex-start">Post Idea</button>
             </form>
             <p class="field-hint" id="venture-error" style="display:none; color:var(--danger, #f56b7c)"></p>
@@ -316,14 +321,47 @@
                 <button type="submit" class="secondary">Search</button>
               </form>
             </div>
+
+            <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:14px">
+              <button type="button" class="filter-btn active" data-filter-status="all">All</button>
+              <button type="button" class="filter-btn" data-filter-status="open">Open</button>
+              <button type="button" class="filter-btn" data-filter-status="closed">Closed</button>
+              <span style="width:1px; background:var(--border-light); margin:2px 4px"></span>
+              <button type="button" class="filter-btn" data-filter-tag="partners">Looking for Partners</button>
+              <button type="button" class="filter-btn" data-filter-tag="investment">Looking for Investment</button>
+              <button type="button" class="filter-btn" data-filter-tag="advice">Looking for Advice</button>
+            </div>
+
             <div id="ventures-list" style="margin-top:16px"></div>
             <p class="field-hint" id="ventures-empty" style="display:none">No business ideas posted yet.</p>
-            <p class="field-hint" id="ventures-no-match" style="display:none">No ideas match your search.</p>
+            <p class="field-hint" id="ventures-no-match" style="display:none">No ideas match your filters.</p>
           </div>
         </section>
 
       </div>
     </main>
+  </div>
+
+  <div class="modal-overlay" id="venture-modal" style="display:none">
+    <div class="modal-panel">
+      <div class="modal-header">
+        <div style="min-width:0">
+          <h2 id="venture-modal-title" style="margin:0 0 4px; word-break:break-word">Title</h2>
+          <p class="muted" id="venture-modal-meta" style="margin:0; font-size:0.8rem"></p>
+        </div>
+        <button type="button" class="icon-btn" id="venture-modal-close" title="Close" style="flex-shrink:0">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body" id="venture-modal-body">
+      </div>
+      <div class="modal-footer">
+        <form id="venture-modal-comment-form" style="display:flex; gap:8px">
+          <input type="text" id="venture-modal-comment-input" placeholder="Reply in this thread..." maxlength="1000" style="flex:1" />
+          <button type="submit">Send</button>
+        </form>
+      </div>
+    </div>
   </div>
 
   <script src="/particles.js"></script>

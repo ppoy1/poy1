@@ -21,6 +21,7 @@ export async function onRequestPost({ request, env }) {
   const title = typeof body.title === "string" ? body.title.trim() : "";
   const description = typeof body.description === "string" ? body.description.trim() : "";
   const lookingFor = Array.isArray(body.lookingFor) ? body.lookingFor.filter((t) => VALID_TAGS.includes(t)) : [];
+  const image = typeof body.image === "string" ? body.image : "";
 
   if (!title || title.length > 100) {
     return Response.json({ error: "Title is required (max 100 characters)." }, { status: 400 });
@@ -31,6 +32,15 @@ export async function onRequestPost({ request, env }) {
   if (!lookingFor.length) {
     return Response.json({ error: "Pick at least one thing you're looking for." }, { status: 400 });
   }
+  // Images are resized/re-encoded client-side before upload, so a normal
+  // photo lands well under this - the cap is just a backstop against a
+  // crafted request bloating the shared KV blob.
+  if (image && !/^data:image\/(png|jpeg|webp);base64,/.test(image)) {
+    return Response.json({ error: "Invalid image format." }, { status: 400 });
+  }
+  if (image && image.length > 2_200_000) {
+    return Response.json({ error: "Image is too large. Try a smaller picture." }, { status: 400 });
+  }
 
   const idea = await createBusinessIdea(env.POYBANK_KV, {
     title,
@@ -38,6 +48,7 @@ export async function onRequestPost({ request, env }) {
     lookingFor,
     authorDiscordId: session.discord_id,
     authorUsername: session.username || "Unknown",
+    image,
   });
 
   return Response.json({ ok: true, idea });

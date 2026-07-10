@@ -15,7 +15,7 @@ async function writeBusinessIdeas(kv, ideas) {
   await kv.put(KV_KEY, JSON.stringify(ideas));
 }
 
-export async function createBusinessIdea(kv, { title, description, lookingFor, authorDiscordId, authorUsername }) {
+export async function createBusinessIdea(kv, { title, description, lookingFor, authorDiscordId, authorUsername, image }) {
   const ideas = await readBusinessIdeas(kv);
   const idea = {
     id: `${Date.now()}-${crypto.randomUUID()}`,
@@ -24,6 +24,7 @@ export async function createBusinessIdea(kv, { title, description, lookingFor, a
     lookingFor,
     authorDiscordId,
     authorUsername,
+    image: image || null,
     status: "open",
     createdAt: new Date().toISOString(),
     comments: [],
