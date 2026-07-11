@@ -4,11 +4,18 @@
 import { verifySession } from "../../_lib/session.js";
 import { readSnapshot } from "../../_lib/kv.js";
 import { recordActivity } from "../../_lib/activity.js";
+import { isBanned } from "../../_lib/bans.js";
 
 export async function onRequestGet({ request, env }) {
   const session = await verifySession(env.SESSION_SECRET, request.headers.get("Cookie"));
   if (!session || (session.role !== "client" && session.role !== "admin") || !session.ign) {
     return Response.json({ error: "Not authenticated" }, { status: 401 });
+  }
+
+  // Sessions live up to 7 days, so a ban issued after login must still be
+  // enforced against an already-issued cookie, not just at the OAuth step.
+  if (session.role !== "admin" && (await isBanned(env.POYBANK_KV, session.discord_id))) {
+    return Response.json({ error: "This account has been banned." }, { status: 403 });
   }
 
   await recordActivity(env.POYBANK_KV, session.discord_id);

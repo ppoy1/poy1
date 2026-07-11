@@ -5,6 +5,7 @@
 
 import { createSessionCookie } from "../../_lib/session.js";
 import { readSnapshot } from "../../_lib/kv.js";
+import { isBanned } from "../../_lib/bans.js";
 
 export async function onRequestGet({ request, env }) {
   const url = new URL(request.url);
@@ -36,10 +37,15 @@ export async function onRequestGet({ request, env }) {
   }
   const discordUser = await userResp.json();
 
+  const isOwner = env.OWNER_DISCORD_ID && discordUser.id === env.OWNER_DISCORD_ID;
+  if (!isOwner && (await isBanned(env.POYBANK_KV, discordUser.id))) {
+    return new Response(null, { status: 302, headers: { Location: "/banned.html" } });
+  }
+
   const snapshot = await readSnapshot(env.POYBANK_KV);
   const ign = snapshot?.account_links?.[discordUser.id];
 
-  if (env.OWNER_DISCORD_ID && discordUser.id === env.OWNER_DISCORD_ID) {
+  if (isOwner) {
     const cookie = await createSessionCookie(
       env.SESSION_SECRET,
       { role: "admin", discord_id: discordUser.id, username: discordUser.username, avatar: discordUser.avatar || null, ign: ign || null },
